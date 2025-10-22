@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ставки от AI</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1c2738;
+            color: white; 
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 350px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-weight: 500;
+            margin: 0;
+            font-size: 22px;
+        }
+        
+        /* Стили для кастомного выпадающего списка языков */
+        .language-select {
+            position: relative;
+            cursor: pointer;
+            border: 1px solid #313d4f;
+            background-color: #1c2738;
+            border-radius: 8px;
+            min-width: 90px;
+        }
+        .selected-language {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            gap: 8px;
+            font-weight: bold;
+        }
+        .arrow-down {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid white;
+            margin-left: auto;
+        }
+        .language-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #313d4f;
+            border-radius: 8px;
+            margin-top: 5px;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .language-options.show {
+            display: block;
+        }
+        .language-option {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .language-option:hover {
+            background-color: #4a586e;
+        }
+        .flag-icon {
+            width: 24px;
+            height: 16px;
+            border-radius: 3px;
+            object-fit: cover;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .button {
+            width: 100%;
+            max-width: 350px;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            box-sizing: border-box;
+            transition: background-color 0.2s, margin-bottom 0.2s, margin-top 0.2s; /* Плавный переход для кнопок */
+        }
+        .upload-container {
+            width: 100%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px; 
+        }
+        .upload-hint {
+            font-size: 13px;
+            color: #8a96a8;
+            margin-top: 10px; 
+        }
+        .primary-button {
+            background-color: #00e676;
+            color: #1c2738;
+            margin-bottom: 15px;
+        }
+        .primary-button:disabled {
+            background-color: #313d4f;
+            color: #8a96a8;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .secondary-button {
+            background-color: #313d4f;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .secondary-button:disabled {
+            background-color: #313d4f;
+            color: #8a96a8;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        select.button {
+            margin-bottom: 15px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: #313d4f;
+            color: white;
+            padding-left: 20px;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M8,11L2,5h12L8,11z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 1em;
+        }
+        select.button:invalid {
+             color: #8a96a8;
+        }
+        select.button option {
+            background: #1c2738;
+            color: white;
+            font-weight: normal;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .uploaded-image-container {
+            margin-bottom: 20px;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .uploaded-image {
+            max-width: 220px;
+            max-height: 220px;
+            border-radius: 8px;
+            object-fit: contain;
+            border: 1px solid #00e676;
+        }
+        .attempts-text {
+            width: 100%;
+            max-width: 350px;
+            background-color: #2a3649;
+            padding: 15px;
+            border-radius: 12px;
+            box-sizing: border-box;
+            margin-top: 0;
+            margin-bottom: 20px; /* Отступ снизу */
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #888;
+            padding-top: 20px;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- СТИЛИ: ЭКРАН ЗАГРУЗКИ --- */
+        .analysis-container {
+            width: 100%;
+            max-width: 350px;
+            margin-bottom: 15px;
+        }
+        #analysisStatusText {
+            font-size: 14px;
+            color: #a0b0c8;
+            height: 20px;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #313d4f;
+            border-radius: 8px;
+            height: 8px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            width: 100%;
+            height: 100%;
+            background-color: #00e676;
+            animation: loading-progress 2s linear infinite;
+        }
+        @keyframes loading-progress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* --- СТИЛИ: РЕЗУЛЬТАТЫ --- */
+        .results-container {
+            width: 100%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        .result-card {
+            background-color: #2a3649;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: left;
+        }
+        .result-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+        .result-card-header > div {
+            flex: 1;
+        }
+        
+        .card-title {
+            font-size: 12px;
+            color: #8a96a8;
+            margin-bottom: 5px;
+        }
+        .confidence-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00e676;
+        }
+        .signal-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .result-card-header .info-block:first-child {
+            border-right: 1px solid #4a586e;
+            padding-right: 15px;
+        }
+        .event-list .event-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .event-list .event-item:last-child {
+            margin-bottom: 0;
+        }
+        .event-name {
+            font-size: 14px;
+            flex-basis: 50%;
+        }
+        .event-progress-container {
+            flex-basis: 35%;
+            background-color: #1c2738;
+            height: 8px;
+            border-radius: 4px;
+        }
+        .event-progress-bar {
+            height: 100%;
+            background-color: #00e676;
+            border-radius: 4px;
+        }
+        .event-percentage {
+            font-size: 14px;
+            font-weight: bold;
+            flex-basis: 10%;
+            text-align: right;
+        }
+        .analytics-title {
+            font-size: 12px;
+            color: #8a96a8;
+            margin-bottom: 8px;
+        }
+        .analytics-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .analytics-text b {
+            color: #00e676;
+        }
+        
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #e53935; /* Красный цвет для ошибки */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 1;
+            transition: opacity 0.3s ease-out, top 0.3s ease-out;
+        }
+        .custom-alert.hidden {
+            opacity: 0;
+            top: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💡 Ставки от AI</h1>
+        <div class="language-select">
+            <div class="selected-language">
+                <img id="selectedLangFlag" class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%23fff' width='9' height='3'/%3E%3Crect fill='%23d52b1e' y='3' width='9' height='3'/%3E%3Crect fill='%230039a6' y='2' width='9' height='2'/%3E%3C/svg%3E" alt="Russian Flag">
+                <span id="selectedLangText">RU</span>
+                <span class="arrow-down"></span>
+            </div>
+            <div class="language-options">
+                <div class="language-option" data-lang="ru">
+                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%23fff' width='9' height='3'/%3E%3Crect fill='%23d52b1e' y='3' width='9' height='3'/%3E%3Crect fill='%230039a6' y='2' width='9' height='2'/%3E%3C/svg%3E" alt="Russian Flag">
+                    <span>RU</span>
+                </div>
+                <div class="language-option" data-lang="en">
+                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3CclipPath id='s'%3E%3Cpath d='M0,0 v30 h60 v-30 z'/%3E%3C/clipPath%3E%3Cpath d='M0,0 v30 h60 v-30 z' fill='%2300247d'/%3E%3Cpath d='M60,0 L0,30 M0,0 L60,30' stroke='%23fff' stroke-width='6' clip-path='url(%23s)'/%3E%3Cpath d='M60,0 L0,30 M0,0 L60,30' stroke='%23cf142b' stroke-width='4' clip-path='url(%23s)'/%3E%3Cpath d='M30,0 v30 M0,15 h60' stroke='%23fff' stroke-width='10'/%3E%3Cpath d='M30,0 v30 M0,15 h60' stroke='%23cf142b' stroke-width='6'/%3E%3C/svg%3E" alt="British Flag">
+                    <span>EN</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-area">
+        
+        <select id="gameType" class="button">
+            <option value="" disabled selected>Тип игры</option>
+            <option value="football">Футбол</option>
+            <option value="basketball">Баскетбол</option>
+            <option value="tennis">Теннис</option>
+            <option value="hockey">Хоккей</option>
+            <option value="volleyball">Волейбол</option>
+            <option value="boxing">Бокс</option>
+            <option value="mma">MMA</option>
+            <option value="ufc">UFC</option>
+            <option value="table-tennis">Настольный теннис</option>
+            <option value="baseball">Бейсбол</option>
+            <option value="handball">Гандбол</option>
+            <option value="rugby">Регби</option>
+            <option value="cricket">Крикет</option>
+            <option value="dota2">Dota 2</option>
+            <option value="cs2">CS2</option>
+        </select>
+
+        <div id="resultsContainer" class="results-container hidden">
+            <!-- Сюда будут вставляться результаты из JS -->
+        </div>
+
+        <div id="imagePreview" class="uploaded-image-container hidden">
+            <img class="uploaded-image" src="" alt="Предварительный просмотр изображения">
+        </div>
+        
+        <div id="uploadContainer" class="upload-container">
+            <label for="imageUpload" id="uploadLabel" class="button secondary-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                Загрузите изображение события
+            </label>
+            <p class="upload-hint">Или просто вставьте скриншот (Ctrl + V)</p>
+        </div>
+        <input type="file" id="imageUpload" accept="image/*">
+        
+        <button id="analyzeButton" class="button primary-button" disabled>🔍 Проанализировать ставку</button>
+        
+        <div id="analysisContainer" class="analysis-container hidden">
+            <p id="analysisStatusText">Анализируем...</p>
+            <div class="progress-bar">
+                <div class="progress-bar-inner"></div>
+            </div>
+        </div>
+        
+        <button id="tryAgainButton" class="button secondary-button hidden" style="margin-bottom: 15px;">🔄 Выбрать другое изображение</button>
+        
+        <p id="attemptsText" class="attempts-text">Осталось попыток на сегодня: 10 из 10</p>
+    </div>
+
+    <p class="footer-text">Создано нейросетью BetGPT - © 2025</p>
+
+    <div id="customAlert" class="custom-alert hidden"></div>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // --- ИЗМЕНЕНИЕ: ВАШ API-КЛЮЧ ОТ GEMINI ---
+        const GEMINI_API_KEY = "AIzaSyDo1fbHqoRxLqVxJkoRel58iG_bOvWLqnU"; // <-- Сюда вставлен ваш ключ
+
+        // --- Ваш секретный промпт, который будет добавлен к каждому запросу AI ---
+        const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен."; 
+
+        let currentLang = 'ru';
+        let attemptsLeft = 10;
+        let totalAttempts = 10;
+        let isAnalyzing = false; 
+
+        const translations = {
+            'ru': {
+                'title': '💡 Ставки от AI',
+                'gameType': 'Тип игры',
+                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Загрузите изображение события',
+                'uploadHint': 'Или просто вставьте скриншот (Ctrl + V)',
+                'analyzeButton': '🔍 Проанализировать ставку',
+                'analyzeButtonLoading': '⏳ Анализируем...',
+                'tryAgainButton': '🔄 Выбрать другое изображение',
+                'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
+                'footerText': 'Создано нейросетью BetGPT - © 2025',
+                'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
+                'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.',
+                'alert_no_attempts': 'У вас закончились попытки на сегодня.',
+                'alert_api_key_missing': 'API ключ для Gemini не указан. Анализ невозможен.',
+                'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
+                // КОММЕНТАРИЙ: Добавлены ключи для языка запроса и системной инструкции
+                'analyze_prompt': 'Проанализируй эту ставку на {gameType}.',
+                'system_prompt': `Ты — профессиональный AI-аналитик спортивных событий BetGPT. Твоя задача — изучить команды, коэффициенты и другую информацию на скриншоте, чтобы дать прогноз. ${MY_CUSTOM_PROMPT ? `Дополнительно учти следующую инструкцию: "${MY_CUSTOM_PROMPT}".` : ''} Все текстовые поля в твоем JSON-ответе (такие как 'signal' и 'analytics') должны быть на русском языке. Верни ответ СТРОГО в формате JSON, который соответствует предоставленной схеме.`,
+                'analysis_steps': [
+                    'Анализируем изображение...',
+                    'Собираем данные о командах...',
+                    'Проводим ИИ анализ...',
+                    'Высчитываем вероятности...'
+                ],
+                'results_confidence': 'УВЕРЕННОСТЬ AI',
+                'results_signal': 'НАДЁЖНЫЙ СИГНАЛ',
+                'results_events': '% СОБЫТИЙ',
+                'results_analytics': 'АИ АНАЛИТИКА',
+                'gameTypes': {
+                    'football': 'Футбол', 'basketball': 'Баскетбол', 'tennis': 'Теннис',
+                    'hockey': 'Хоккей', 'volleyball': 'Волейбол', 'boxing': 'Бокс',
+                    'mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Настольный теннис',
+                    'baseball': 'Бейсбол', 'handball': 'Гандбол', 'rugby': 'Регби',
+                    'cricket': 'Крикет', 'dota2': 'Dota 2', 'cs2': 'CS2'
+                }
+            },
+            'en': {
+                'title': '💡 AI Bets',
+                'gameType': 'Game Type',
+                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
+                'uploadHint': 'Or just paste a screenshot (Ctrl + V)',
+                'analyzeButton': '🔍 Analyze bet',
+                'analyzeButtonLoading': '⏳ Analyzing...',
+                'tryAgainButton': '🔄 Choose another image',
+                'attemptsText': 'Attempts left today: {left} of {total}',
+                'footerText': 'Created by BetGPT neural network - © 2025',
+                'alert_select_image': 'Please upload an event image first.',
+                'alert_select_game_type': 'Please select a game type first.',
+                'alert_no_attempts': 'You have no attempts left for today.',
+                'alert_api_key_missing': 'Gemini API key is not provided. Analysis is not possible.',
+                'alert_api_error': 'Error during analysis. Please check the console or try again later.',
+                 // КОММЕНТАРИЙ: Добавлены ключи для языка запроса и системной инструкции
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                'system_prompt': `You are a professional AI sports analyst BetGPT. Your task is to study the teams, odds, and other information on the screenshot to provide a forecast. ${MY_CUSTOM_PROMPT ? `Additionally, consider this instruction: "${MY_CUSTOM_PROMPT}".` : ''} All text fields in your JSON response (such as 'signal' and 'analytics') must be in English. Respond STRICTLY in the JSON format that matches the provided schema.`,
+                 'analysis_steps': [
+                    'Analyzing image...',
+                    'Gathering team data...',
+                    'Performing AI analysis...',
+                    'Calculating probabilities...'
+                ],
+                'results_confidence': 'AI CONFIDENCE',
+                'results_signal': 'RELIABLE SIGNAL',
+                'results_events': '% OF EVENTS',
+                'results_analytics': 'AI ANALYTICS',
+                'gameTypes': {
+                    'football': 'Football', 'basketball': 'Basketball', 'tennis': 'Tennis',
+                    'hockey': 'Hockey', 'volleyball': 'Volleyball', 'boxing': 'Boxing',
+                    'mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Table Tennis',
+                    'baseball': 'Baseball', 'handball': 'Handball', 'rugby': 'Rugby',
+                    'cricket': 'Cricket', 'dota2': 'Dota 2', 'cs2': 'CS2'
+                }
+            }
+        };
+
+        // --- Элементы DOM ---
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const imagePreviewContainer = document.getElementById('imagePreview');
+        const imagePreview = document.querySelector('#imagePreview img');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const tryAgainButton = document.getElementById('tryAgainButton');
+        const attemptsTextElement = document.getElementById('attemptsText');
+        const gameTypeSelect = document.getElementById('gameType');
+        
+        const selectedLanguage = document.querySelector('.selected-language');
+        const languageOptionsContainer = document.querySelector('.language-options');
+        const languageOptions = document.querySelectorAll('.language-option');
+        const selectedLangFlag = document.getElementById('selectedLangFlag');
+        const selectedLangText = document.getElementById('selectedLangText');
+
+        const analysisContainer = document.getElementById('analysisContainer');
+        const analysisStatusText = document.getElementById('analysisStatusText');
+        const resultsContainer = document.getElementById('resultsContainer');
+        let analysisInterval;
+        
+        function showCustomAlert(message) {
+            const customAlert = document.getElementById('customAlert');
+            customAlert.textContent = message;
+            customAlert.classList.remove('hidden');
+
+            setTimeout(() => {
+                customAlert.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateAnalyzeButtonState() {
+            const imageLoaded = !imagePreviewContainer.classList.contains('hidden');
+            analyzeButton.disabled = !imageLoaded;
+        }
+
+        function updateAttemptsText() {
+            const t = translations[currentLang];
+            attemptsTextElement.textContent = t.attemptsText
+                .replace('{left}', attemptsLeft)
+                .replace('{total}', totalAttempts);
+        }
+
+        function setLanguage(lang) {
+            const t = translations[lang];
+            document.querySelector('h1').innerHTML = t.title;
+            document.querySelector('#gameType option[disabled]').textContent = t.gameType;
+            document.getElementById('uploadLabel').innerHTML = t.uploadLabel;
+            document.querySelector('.upload-hint').innerHTML = t.uploadHint;
+            
+            analyzeButton.innerHTML = isAnalyzing ? t.analyzeButtonLoading : t.analyzeButton;
+            tryAgainButton.innerHTML = t.tryAgainButton;
+            updateAttemptsText();
+            document.querySelector('.footer-text').textContent = t.footerText;
+
+            const gameOptions = gameTypeSelect.querySelectorAll('option:not([disabled])');
+            gameOptions.forEach(option => {
+                const gameKey = option.value;
+                if (t.gameTypes[gameKey]) {
+                    option.textContent = t.gameTypes[gameKey];
+                }
+            });
+        }
+
+        selectedLanguage.addEventListener('click', () => {
+            languageOptionsContainer.classList.toggle('show');
+        });
+
+        languageOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                currentLang = option.dataset.lang;
+                selectedLangFlag.src = option.querySelector('.flag-icon').src;
+                selectedLangText.textContent = option.querySelector('span').textContent;
+                setLanguage(currentLang);
+                languageOptionsContainer.classList.remove('show');
+            });
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (!document.querySelector('.language-select').contains(e.target)) {
+                languageOptionsContainer.classList.remove('show');
+            }
+        });
+
+        function showImage(file) {
+            resultsContainer.classList.add('hidden');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.remove('hidden');
+                uploadContainer.classList.add('hidden');
+                
+                analyzeButton.classList.remove('hidden'); // КОММЕНТАРИЙ: Эта строка исправляет ошибку, показывая кнопку при загрузке нового фото
+                // КОММЕНТАРИЙ: Добавлено для сброса текста кнопки и состояния
+                analyzeButton.innerHTML = translations[currentLang].analyzeButton; 
+                isAnalyzing = false;
+                
+                updateAnalyzeButtonState();
+                tryAgainButton.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        imageUpload.addEventListener('change', (event) => {
+            if (event.target.files[0]) showImage(event.target.files[0]);
+        });
+        
+        document.addEventListener('paste', (event) => {
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    showImage(item.getAsFile());
+                }
+            }
+        });
+        
+        function resetToInitialState() {
+            imageUpload.value = '';
+            isAnalyzing = false;
+            
+            imagePreviewContainer.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            analysisContainer.classList.add('hidden');
+            uploadContainer.classList.remove('hidden');
+            
+            analyzeButton.disabled = true;
+            analyzeButton.innerHTML = translations[currentLang].analyzeButton;
+            analyzeButton.classList.remove('hidden');
+            analyzeButton.style.marginBottom = '';
+
+            tryAgainButton.classList.add('hidden');
+            tryAgainButton.disabled = false;
+            gameTypeSelect.disabled = false;
+            gameTypeSelect.classList.remove('hidden');
+        }
+
+        tryAgainButton.addEventListener('click', resetToInitialState);
+
+        function displayResults(data) {
+            const t = translations[currentLang];
+            
+            resultsContainer.innerHTML = `
+                <div class="result-card">
+                    <div class="result-card-header">
+                        <div class="info-block">
+                            <div class="card-title">${t.results_confidence}</div>
+                            <div class="confidence-value">${data.confidence || 'N/A'}%</div>
+                        </div>
+                        <div class="info-block">
+                            <div class="card-title">${t.results_signal}</div>
+                            <div class="signal-value">${data.signal || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-card event-list">
+                    <div class="card-title">${t.results_events}</div>
+                    ${(data.events || []).map(event => `
+                        <div class="event-item">
+                            <span class="event-name">${event.name}</span>
+                            <div class="event-progress-container">
+                                <div class="event-progress-bar" style="width: ${event.probability}%;"></div>
+                            </div>
+                            <span class="event-percentage">${event.probability}%</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="result-card">
+                    <div class="analytics-title">${t.results_analytics}</div>
+                    <p class="analytics-text">${data.analytics || 'Аналитика недоступна.'}</p>
+                </div>
+            `;
+            resultsContainer.classList.remove('hidden');
+        }
+
+        // --- ИЗМЕНЕНИЕ: ВСЯ ФУНКЦИЯ 'analyzeBet' ЗАМЕНЕНА НА ЛОГИКУ GEMINI ---
+        async function analyzeBet() {
+            const t = translations[currentLang];
+            console.log("--- Starting Bet Analysis with Gemini 2.5 Flash ---"); 
+
+            if (gameTypeSelect.value === '') {
+                console.warn("Validation failed: Game type not selected.");
+                showCustomAlert(t.alert_select_game_type);
+                return;
+            }
+            
+            if (!GEMINI_API_KEY) {
+                console.error("Initialization failed: Gemini API key is missing.");
+                showCustomAlert(t.alert_api_key_missing);
+                return;
+            }
+            if (attemptsLeft <= 0) {
+                 console.warn("Validation failed: No attempts left.");
+                 showCustomAlert(t.alert_no_attempts);
+                 return;
+            }
+            
+            attemptsLeft--;
+            updateAttemptsText();
+            isAnalyzing = true;
+            
+            console.log("UI state updated for analysis.");
+            analyzeButton.innerHTML = t.analyzeButtonLoading;
+            analyzeButton.disabled = true; 
+            analyzeButton.style.marginBottom = '5px';
+            analysisContainer.classList.remove('hidden');
+            tryAgainButton.classList.remove('hidden');
+            tryAgainButton.disabled = true;
+            imagePreviewContainer.classList.add('hidden');
+
+            // КОММЕНТАРИЙ: Блокируем выпадающий список на время анализа
+            gameTypeSelect.disabled = true;
+
+            let step = 0;
+            const steps = t.analysis_steps;
+            analysisStatusText.textContent = steps[step];
+            analysisInterval = setInterval(() => {
+                step = (step + 1) % steps.length;
+                analysisStatusText.textContent = steps[step];
+            }, 2000);
+            
+            try {
+                const imageBase64_full = imagePreview.src;
+                const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
+
+                // ИЗМЕНЕНИЕ: Получаем текст промпта и системной инструкции из объекта translations
+                // в зависимости от выбранного языка (currentLang)
+                const userPromptText = t.analyze_prompt.replace('{gameType}', gameTypeValue);
+                const systemPromptText = t.system_prompt;
+
+                const mimeType = imageBase64_full.split(',')[0].split(':')[1].split(';')[0];
+                const base64Data = imageBase64_full.split(',')[1];
+                
+                // ИЗМЕНЕНО: Системная инструкция для Gemini
+                const systemInstruction = {
+                  parts: [{
+                    text: systemPromptText // ИЗМЕНЕНИЕ: Используем текст на выбранном языке
+                  }]
+                };
+
+                // ИЗМЕНЕНО: JSON-схема для Gemini. 
+                const responseSchema = {
+                  type: "OBJECT",
+                  properties: {
+                    "confidence": { type: "NUMBER" },
+                    "signal": { type: "STRING" },
+                    "events": {
+                      type: "ARRAY",
+                      items: {
+                        type: "OBJECT",
+                        properties: {
+                          "name": { type: "STRING" },
+                          "probability": { type: "NUMBER" }
+                        },
+                        required: ["name", "probability"]
+                      }
+                    },
+                    "analytics": { type: "STRING" }
+                  },
+                  required: ["confidence", "signal", "events", "analytics"]
+                };
+
+                // ИЗМЕНЕНО: Тело запроса для Gemini
+                const requestBody = {
+                  contents: [
+                    {
+                      parts: [
+                        { text: userPromptText }, // ИЗМЕНЕНИЕ: Используем текст на выбранном языке
+                        {
+                          inlineData: {
+                            mimeType: mimeType,
+                            data: base64Data
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  systemInstruction: systemInstruction,
+                  generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema
+                  }
+                };
+                
+                console.log("Sending request to Gemini API."); 
+
+				// ИЗМЕНЕНО: URL и заголовки для Gemini
+				const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                console.log("Received response object from API:", response);
+                const responseText = await response.text();
+                console.log("Raw response text from API:", responseText);
+
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(responseText);
+                    } catch (e) {
+                        errorData = { error: { message: "Failed to parse error response from API." } };
+                    }
+                    console.error('Gemini API Error Response:', errorData); 
+                    throw new Error(errorData.error ? errorData.error.message : 'Network response was not ok');
+                }
+
+                const data = JSON.parse(responseText);
+                console.log("Parsed API response JSON:", data);
+                
+                // ИЗМЕНЕНО: Парсинг ответа от Gemini
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0].text) {
+                    console.error("Invalid response structure from Gemini API:", data);
+                    throw new Error("Не удалось извлечь контент из ответа API.");
+                }
+                
+                const messageContent = data.candidates[0].content.parts[0].text; 
+                console.log("Attempting to parse message content:", messageContent);
+                const results = JSON.parse(messageContent);
+                console.log("Successfully parsed analysis results:", results);
+                
+                displayResults(results);
+
+            } catch (error) {
+                console.error('--- ERROR during API call or processing ---');
+                console.error('Full error object:', error);
+                showCustomAlert(t.alert_api_error);
+                attemptsLeft++;
+                updateAttemptsText();
+                resetToInitialState();
+            } finally {
+                console.log("--- Analysis process finished ---");
+                clearInterval(analysisInterval);
+                isAnalyzing = false;
+                analysisContainer.classList.add('hidden');
+                analyzeButton.classList.add('hidden');
+                
+                // КОММЕНТАРИЙ: Сбрасываем встроенный стиль отступа, чтобы он вернулся к 15px из CSS
+                analyzeButton.style.marginBottom = ''; 
+                
+                tryAgainButton.disabled = false;
+                
+                // КОММЕНТАРИЙ: Разблокируем выпадающий список после анализа
+                gameTypeSelect.disabled = false;
+            }
+        }
+        
+        analyzeButton.onclick = analyzeBet; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            tg.ready();
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id');
+            
+            updateAttemptsText();
+            setLanguage(currentLang);
+        });
+
+    </script>
+</body>
+</html>
