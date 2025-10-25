@@ -1108,6 +1108,26 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
        // --- Обработчик кнопки анализа ---
         analyzeButton.onclick = analyzeBet;
 
+        // --- ИЗМЕНЕНИЕ: Функция "прогрева" бэкенда ---
+        async function pingBackend() {
+            if (!userId) return; // Не делаем пинг, если нет user_id
+            console.log("Pinging backend to potentially bypass ngrok warning...");
+            try {
+                // Делаем GET запрос, но не ждем и не обрабатываем ответ
+                fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
+                     method: 'GET',
+                     cache: 'no-cache'
+                 }).catch(err => {
+                     // Игнорируем любые ошибки, включая ошибки парсинга HTML
+                     console.log("Ping request finished (errors ignored).");
+                 });
+            } catch (error) {
+                 // Также игнорируем ошибки
+                 console.log("Ping request failed (error ignored).");
+            }
+        }
+        // ---------------------------------------------
+
 
         // --- ИЗМЕНЕНИЕ: Функция загрузки начальных данных (попыток) ---
         async function loadInitialAttempts(retry = true) {
@@ -1136,20 +1156,15 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              } catch (error) {
                  console.error('Failed to load initial attempts:', error);
 
-                 // --- ИЗМЕНЕНИЕ: Логика повторного запроса ---
-                 if (retry && error instanceof SyntaxError && error.message.includes("Unexpected token '<'")) {
-                     console.log("Received HTML instead of JSON, likely ngrok warning. Retrying in 500ms...");
-                     setTimeout(() => {
-                         loadInitialAttempts(false); // Вызываем снова, но без возможности повтора (retry = false)
-                     }, 500);
-                 } else {
-                     // Если это не ошибка парсинга HTML или повторная попытка не удалась
-                     attemptsLeft = -1; // Ставим -1, чтобы показать ошибку
-                     attemptsTextElement.textContent = t.attemptsTextError; // Показываем текст ошибки
-                     attemptsTextElement.classList.add('attempts-error'); // Добавляем класс ошибки
-                     updateAnalyzeButtonState(); // Обновляем состояние кнопки (будет неактивна)
-                 }
-                 // ------------------------------------------
+                 // --- УБРАЛИ Логику повторного запроса отсюда ---
+                 // Теперь повтор не нужен, т.к. мы делаем "прогрев" перед этим вызовом
+
+                 // Сразу показываем ошибку, если запрос не удался
+                 attemptsLeft = -1; // Ставим -1, чтобы показать ошибку
+                 attemptsTextElement.textContent = t.attemptsTextError; // Показываем текст ошибки
+                 attemptsTextElement.classList.add('attempts-error'); // Добавляем класс ошибки
+                 updateAnalyzeButtonState(); // Обновляем состояние кнопки (будет неактивна)
+
              }
          }
 
@@ -1174,7 +1189,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
             // Если user_id найден, загружаем попытки
             if (userId) {
-                loadInitialAttempts(); // Запускаем загрузку попыток
+                // --- ИЗМЕНЕНИЕ: Сначала делаем "прогрев", потом загружаем попытки ---
+                pingBackend(); // Запускаем "прогрев" (не ждем завершения)
+                // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
+                setTimeout(() => {
+                    loadInitialAttempts(); // Запускаем основную загрузку попыток
+                }, 100); // 100 миллисекунд
+                // -------------------------------------------------------------
             } else {
                 console.error("User ID not found in URL or initDataUnsafe.");
                 attemptsLeft = -1; // Ставим ошибку
