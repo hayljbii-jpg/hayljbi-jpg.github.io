@@ -443,11 +443,9 @@
         
         // -----------------------------------------------------------------
         // ! ! ! ВАЖНО ! ! !
-        // УКАЖИТЕ ЗДЕСЬ IP-АДРЕС СЕРВЕРА, ГДЕ ЗАПУЩЕН main.py
-        // Если main.py на этом же компьютере: 'http://127.0.0.1:5000'
-        // Если main.py на сервере: 'http://IP_АДРЕС_СЕРВЕРА:5000'
+        // ЗАМЕНИТЕ ЭТО НА HTTPS URL ВАШЕГО СЕРВЕРА (ОТ NGROK ИЛИ НАСТРОЕННЫЙ)
         // -----------------------------------------------------------------
-        const BACKEND_URL = 'http://194.87.79.189:5000'; 
+        const BACKEND_URL = 'https://ЗАМЕНИТЬ_НА_ВАШ_HTTPS_АДРЕС'; 
         // -----------------------------------------------------------------
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -641,7 +639,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             
             analyzeButton.innerHTML = isAnalyzing ? t.analyzeButtonLoading : t.analyzeButton;
             tryAgainButton.innerHTML = t.tryAgainButton;
-            if (attemptsTextElement.textContent !== t.attemptsLoading) {
+            if (attemptsTextElement.textContent !== t.attemptsLoading && attemptsTextElement.textContent !== t.attemptsError) {
                 updateAttemptsText();
             }
             document.querySelector('.footer-text').textContent = t.footerText;
@@ -794,6 +792,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 console.error("User ID is missing, cannot send attempt.");
                 return false;
             }
+            if (!BACKEND_URL || BACKEND_URL.includes('ЗАМЕНИТЬ')) {
+                console.error("BACKEND_URL is not configured properly.");
+                return false;
+            }
             try {
                 const response = await fetch(`${BACKEND_URL}/use_attempt`, {
                     method: 'POST',
@@ -801,7 +803,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     body: JSON.stringify({ user_id: USER_ID })
                 });
                 if (!response.ok) {
-                    throw new Error('Backend server error');
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown backend error' }));
+                    throw new Error(errorData.error || 'Backend server error');
                 }
                 const data = await response.json();
                 console.log("Attempt successfully sent to backend:", data);
@@ -819,6 +822,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             if (!USER_ID) {
                 showCustomAlert(t.alert_no_user_id); return;
             }
+             if (!BACKEND_URL || BACKEND_URL.includes('ЗАМЕНИТЬ')) {
+                showCustomAlert(t.alert_backend_error); // Show error if URL is default
+                return;
+            }
             if (gameTypeSelect.value === '') {
                 showCustomAlert(t.alert_select_game_type); return;
             }
@@ -829,21 +836,24 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  showCustomAlert(t.alert_no_attempts); return;
             }
             
-            attemptsLeft--;
-            updateAttemptsText();
-            isAnalyzing = true;
+            // Сначала пытаемся списать попытку
+            isAnalyzing = true; // Устанавливаем флаг анализа ДО отправки на бэкенд
+            analyzeButton.innerHTML = t.analyzeButtonLoading;
+            analyzeButton.disabled = true; 
             
             const attemptSent = await sendAttemptToServer();
             if (!attemptSent) {
                 showCustomAlert(t.alert_backend_error);
-                attemptsLeft++;
-                updateAttemptsText();
-                isAnalyzing = false;
-                return;
+                isAnalyzing = false; // Сбрасываем флаг, если не удалось списать
+                 analyzeButton.innerHTML = t.analyzeButton; // Возвращаем текст кнопки
+                 analyzeButton.disabled = !imagePreviewContainer.classList.contains('hidden'); // Восстанавливаем состояние кнопки
+                return; // Прерываем анализ, если попытка не списана
             }
+            
+            // Если попытка списана успешно, обновляем UI и продолжаем
+            attemptsLeft--;
+            updateAttemptsText();
 
-            analyzeButton.innerHTML = t.analyzeButtonLoading;
-            analyzeButton.disabled = true; 
             analyzeButton.style.marginBottom = '5px';
             analysisContainer.classList.remove('hidden');
             tryAgainButton.classList.remove('hidden');
@@ -923,7 +933,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 
                 if (results.error === "no_odds_detected") {
                     showCustomAlert(t.alert_no_odds_detected);
-                    resetToInitialState();
+                    resetToInitialState(); // Не возвращаем попытку, т.к. она была потрачена на неудачный анализ
                 } else {
                     displayResults(results);
                 }
@@ -939,6 +949,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     showCustomAlert(t.alert_api_error);
                 }
                 
+                // Не возвращаем попытку, т.к. она была потрачена на неудачный анализ
                 resetToInitialState();
             } finally {
                 clearTimeout(timeoutId);
@@ -964,11 +975,17 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  attemptsTextElement.textContent = t.attemptsError;
                  return;
             }
+             if (!BACKEND_URL || BACKEND_URL.includes('ЗАМЕНИТЬ')) {
+                 showCustomAlert(t.alert_backend_error); // Show error if URL is default placeholder
+                 attemptsTextElement.textContent = t.attemptsError;
+                 return;
+            }
 
             try {
                 const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${USER_ID}`);
                 if (!response.ok) {
-                    throw new Error('Backend server error');
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown backend error' }));
+                    throw new Error(errorData.error || 'Backend server error');
                 }
                 const data = await response.json();
                 attemptsLeft = data.attempts_left;
