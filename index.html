@@ -449,8 +449,9 @@
         const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен."; 
 
         let currentLang = 'ru';
-        // КОММЕНТАРИЙ: Значения по умолчанию, которые будут перезаписаны данными из URL.
-        let attemptsLeft = 10;
+        // --- ИЗМЕНЕНИЕ: Это значение по умолчанию будет перезаписано значением из URL ---
+        let attemptsLeft = 10; // Значение по умолчанию
+        // ----------------------------------------------------------------------
         let totalAttempts = 10;
         let isAnalyzing = false; 
 
@@ -788,10 +789,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  showCustomAlert(t.alert_no_attempts); return;
             }
             
-            // КОММЕНТАРИЙ: Отправляем на бэкенд информацию о том, что попытка была использована.
-            // Бэкенд получит это сообщение и уменьшит счетчик в базе данных.
-            tg.sendData(JSON.stringify({ action: 'use_attempt' }));
-            
+            // Списываем попытку локально. Она вернется в блоке catch, если будет ошибка
             attemptsLeft--;
             updateAttemptsText();
             isAnalyzing = true;
@@ -877,8 +875,18 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 
                 if (results.error === "no_odds_detected") {
                     showCustomAlert(t.alert_no_odds_detected);
+                    // --- ИЗМЕНЕНИЕ: Возвращаем попытку, так как анализ не удался ---
+                    attemptsLeft++;
+                    updateAttemptsText();
+                    // -----------------------------------------------------
                     resetToInitialState();
                 } else {
+                    // --- ИЗМЕНЕНИЕ: Отправляем на бэкенд, что попытка использована УСПЕШНО ---
+                    if (tg && tg.sendData) {
+                        tg.sendData(JSON.stringify({ action: "use_attempt" }));
+                        console.log("Sent 'use_attempt' action to backend.");
+                    }
+                    // -------------------------------------------------------------
                     displayResults(results);
                 }
 
@@ -893,10 +901,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     showCustomAlert(t.alert_api_error);
                 }
                 
-                // КОММЕНТАРИЙ: Возвращаем попытку обратно в интерфейсе, т.к. бэкенд не был уведомлен об успехе.
-                // При следующей перезагрузке данные синхронизируются.
-                attemptsLeft++; 
+                // --- ИЗМЕНЕНИЕ: Возвращаем попытку, так как произошла ошибка ---
+                attemptsLeft++;
                 updateAttemptsText();
+                // ---------------------------------------------------------
                 resetToInitialState();
             } finally {
                 clearTimeout(timeoutId);
@@ -914,20 +922,23 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         analyzeButton.onclick = analyzeBet; 
 
         document.addEventListener('DOMContentLoaded', () => {
-            tg.ready();
-            
-            // КОММЕНТАРИЙ: При загрузке страницы получаем параметры из URL, переданные бэкендом.
-            const urlParams = new URLSearchParams(window.location.search);
-            const initialAttempts = urlParams.get('attempts_left');
-            const initialTotal = urlParams.get('total_attempts');
-            
-            // КОММЕНТАРИЙ: Если параметры в URL есть, обновляем переменные.
-            if (initialAttempts !== null && initialTotal !== null) {
-                attemptsLeft = parseInt(initialAttempts, 10);
-                totalAttempts = parseInt(initialTotal, 10);
+            // --- ИЗМЕНЕНИЕ: Получаем попытки из URL ---
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const attemptsFromUrl = urlParams.get('attempts_left');
+                if (attemptsFromUrl !== null && !isNaN(parseInt(attemptsFromUrl))) {
+                    attemptsLeft = parseInt(attemptsFromUrl, 10);
+                    console.log(`Attempts set from URL: ${attemptsLeft}`);
+                } else {
+                    console.log("No valid 'attempts_left' in URL, using default.");
+                }
+            } catch (e) {
+                console.error("Error parsing URL params for attempts:", e);
             }
+            // ----------------------------------------
 
-            updateAttemptsText();
+            tg.ready();
+            updateAttemptsText(); // Теперь эта функция покажет актуальное число попыток
             setLanguage(currentLang);
         });
 
