@@ -866,6 +866,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                        'ngrok-skip-browser-warning': 'true'
+                        // ------------------------------------------
                     },
                     body: JSON.stringify({ user_id: userId })
                 });
@@ -1116,7 +1119,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 // Делаем GET запрос, но не ждем и не обрабатываем ответ
                 fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
                      method: 'GET',
-                     cache: 'no-cache'
+                     cache: 'no-cache',
+                     // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                     headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                     }
+                     // ------------------------------------------
                  }).catch(err => {
                      // Игнорируем любые ошибки, включая ошибки парсинга HTML
                      console.log("Ping request finished (errors ignored).");
@@ -1130,7 +1138,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
 
         // --- ИЗМЕНЕНИЕ: Функция загрузки начальных данных (попыток) ---
-        async function loadInitialAttempts(retry = true) {
+        async function loadInitialAttempts() { // Убрали параметр retry
              const t = translations[currentLang];
              attemptsTextElement.textContent = t.attemptsTextLoading; // Показываем "Загрузка..."
              attemptsTextElement.classList.remove('attempts-error');
@@ -1139,7 +1147,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              try {
                  const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
                      method: 'GET',
-                     cache: 'no-cache' // Добавим, чтобы избежать кэширования
+                     cache: 'no-cache', // Добавим, чтобы избежать кэширования
+                     // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                     headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                     }
+                     // ------------------------------------------
                  });
                  if (!response.ok) {
                       console.error(`Failed to load attempts: ${response.status}`);
@@ -1156,15 +1169,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              } catch (error) {
                  console.error('Failed to load initial attempts:', error);
 
-                 // --- УБРАЛИ Логику повторного запроса отсюда ---
-                 // Теперь повтор не нужен, т.к. мы делаем "прогрев" перед этим вызовом
-
-                 // Сразу показываем ошибку, если запрос не удался
+                 // --- ИЗМЕНЕНИЕ: Убрали повтор, сразу показываем ошибку ---
                  attemptsLeft = -1; // Ставим -1, чтобы показать ошибку
                  attemptsTextElement.textContent = t.attemptsTextError; // Показываем текст ошибки
                  attemptsTextElement.classList.add('attempts-error'); // Добавляем класс ошибки
                  updateAnalyzeButtonState(); // Обновляем состояние кнопки (будет неактивна)
-
+                 // ----------------------------------------------------
              }
          }
 
@@ -1189,13 +1199,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
             // Если user_id найден, загружаем попытки
             if (userId) {
-                // --- ИЗМЕНЕНИЕ: Сначала делаем "прогрев", потом загружаем попытки ---
-                pingBackend(); // Запускаем "прогрев" (не ждем завершения)
-                // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
-                setTimeout(() => {
-                    loadInitialAttempts(); // Запускаем основную загрузку попыток
-                }, 100); // 100 миллисекунд
-                // -------------------------------------------------------------
+                // --- ИЗМЕНЕНИЕ: Убрали прогрев и таймаут, сразу грузим попытки ---
+                loadInitialAttempts(); // Запускаем основную загрузку попыток
+                // -----------------------------------------------------------------
             } else {
                 console.error("User ID not found in URL or initDataUnsafe.");
                 attemptsLeft = -1; // Ставим ошибку
