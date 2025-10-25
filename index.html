@@ -33,7 +33,6 @@
             font-size: 22px;
         }
         
-        /* Стили для кастомного выпадающего списка языков */
         .language-select {
             position: relative;
             cursor: pointer;
@@ -106,7 +105,7 @@
             cursor: pointer;
             border: none;
             box-sizing: border-box;
-            transition: background-color 0.2s, margin-bottom 0.2s, margin-top 0.2s; /* Плавный переход для кнопок */
+            transition: background-color 0.2s, margin-bottom 0.2s, margin-top 0.2s;
         }
         .upload-container {
             width: 100%;
@@ -190,7 +189,7 @@
             border-radius: 12px;
             box-sizing: border-box;
             margin-top: 0;
-            margin-bottom: 20px; /* Отступ снизу */
+            margin-bottom: 20px; 
         }
         .footer-text {
             font-size: 12px;
@@ -201,7 +200,6 @@
             display: none !important;
         }
 
-        /* --- СТИЛИ: ЭКРАН ЗАГРУЗКИ --- */
         .analysis-container {
             width: 100%;
             max-width: 350px;
@@ -231,7 +229,6 @@
             100% { transform: translateX(100%); }
         }
 
-        /* --- СТИЛИ: РЕЗУЛЬТАТЫ --- */
         .results-container {
             width: 100%;
             max-width: 350px;
@@ -316,7 +313,6 @@
             color: #00e676;
             font-weight: 500;
         }
-        /* --- ИЗМЕНЕНИЕ: Стили для нового заголовка --- */
         .profit-header {
             font-size: 14px;
             color: #a0b0c8;
@@ -344,7 +340,7 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #e53935; /* Красный цвет для ошибки */
+            background-color: #e53935; 
             color: white;
             padding: 10px 20px;
             border-radius: 8px;
@@ -433,7 +429,7 @@
         
         <button id="tryAgainButton" class="button secondary-button hidden" style="margin-bottom: 15px;">🔄 Выбрать другое изображение</button>
         
-        <p id="attemptsText" class="attempts-text">Осталось попыток на сегодня: 10 из 10</p>
+        <p id="attemptsText" class="attempts-text">Загрузка попыток...</p>
     </div>
 
     <p class="footer-text">Создано нейросетью BetGPT - © 2025</p>
@@ -445,13 +441,23 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         
+        // -----------------------------------------------------------------
+        // ! ! ! ВАЖНО ! ! !
+        // УКАЖИТЕ ЗДЕСЬ IP-АДРЕС СЕРВЕРА, ГДЕ ЗАПУЩЕН main.py
+        // Если main.py на этом же компьютере: 'http://127.0.0.1:5000'
+        // Если main.py на сервере: 'http://IP_АДРЕС_СЕРВЕРА:5000'
+        // -----------------------------------------------------------------
+        const BACKEND_URL = 'http://194.87.79.189:5000'; 
+        // -----------------------------------------------------------------
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const USER_ID = urlParams.get('user_id');
+
         const GEMINI_API_KEY = "AIzaSyDo1fbHqoRxLqVxJkoRel58iG_bOvWLqnU"; 
         const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен."; 
 
         let currentLang = 'ru';
-        // --- ИЗМЕНЕНИЕ: Это значение по умолчанию будет перезаписано значением из URL ---
-        let attemptsLeft = 10; // Значение по умолчанию
-        // ----------------------------------------------------------------------
+        let attemptsLeft = 10; 
         let totalAttempts = 10;
         let isAnalyzing = false; 
 
@@ -465,19 +471,21 @@
                 'analyzeButtonLoading': '⏳ Анализируем...',
                 'tryAgainButton': '🔄 Выбрать другое изображение',
                 'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
+                'attemptsLoading': 'Загрузка попыток...', 
+                'attemptsError': 'Ошибка загрузки попыток', 
                 'footerText': 'Создано нейросетью BetGPT - © 2025',
-                // --- ИЗМЕНЕНИЕ: Добавлен ключ для заголовка о прибыли ---
                 'profit_header': 'При вложенных 100$ вы заработаете:',
                 'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
                 'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.',
                 'alert_no_attempts': 'У вас закончились попытки на сегодня.',
                 'alert_api_key_missing': 'API ключ для Gemini не указан. Анализ невозможен.',
                 'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
+                'alert_backend_error': 'Ошибка связи с сервером. Попытка не была списана.',
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
+                'alert_no_user_id': 'Ошибка: ID пользователя не найден. Пожалуйста, перезапустите Mini App из бота.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
-                // --- ИЗМЕНЕНИЕ: Промпт усилен, чтобы AI всегда включал коэффициенты ---
                 'system_prompt': `You are BetGPT, an AI Analyst.
 
 **Task 1: Validate Image**
@@ -526,6 +534,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'analyzeButtonLoading': '⏳ Analyzing...',
                 'tryAgainButton': '🔄 Choose another image',
                 'attemptsText': 'Attempts left today: {left} of {total}',
+                'attemptsLoading': 'Loading attempts...',
+                'attemptsError': 'Error loading attempts',
                 'footerText': 'Created by BetGPT neural network - © 2025',
                 'profit_header': 'With a $100 bet, you will earn:',
                 'alert_select_image': 'Please upload an event image first.',
@@ -533,9 +543,11 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_no_attempts': 'You have no attempts left for today.',
                 'alert_api_key_missing': 'Gemini API key is not provided. Analysis is not possible.',
                 'alert_api_error': 'Error during analysis. Please check the console or try again later.',
+                'alert_backend_error': 'Error connecting to server. Attempt was not used.',
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
+                'alert_no_user_id': 'Error: User ID not found. Please restart the Mini App from the bot.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
                 'system_prompt': `You are BetGPT, an AI Analyst.
 
@@ -629,7 +641,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             
             analyzeButton.innerHTML = isAnalyzing ? t.analyzeButtonLoading : t.analyzeButton;
             tryAgainButton.innerHTML = t.tryAgainButton;
-            updateAttemptsText();
+            if (attemptsTextElement.textContent !== t.attemptsLoading) {
+                updateAttemptsText();
+            }
             document.querySelector('.footer-text').textContent = t.footerText;
 
             const gameOptions = gameTypeSelect.querySelectorAll('option:not([disabled])');
@@ -775,10 +789,36 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             resultsContainer.classList.remove('hidden');
         }
 
+        async function sendAttemptToServer() {
+            if (!USER_ID) {
+                console.error("User ID is missing, cannot send attempt.");
+                return false;
+            }
+            try {
+                const response = await fetch(`${BACKEND_URL}/use_attempt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: USER_ID })
+                });
+                if (!response.ok) {
+                    throw new Error('Backend server error');
+                }
+                const data = await response.json();
+                console.log("Attempt successfully sent to backend:", data);
+                return true;
+            } catch (error) {
+                console.error("Failed to send attempt to backend:", error);
+                return false;
+            }
+        }
+
         async function analyzeBet() {
             const t = translations[currentLang];
             console.log("--- Starting Bet Analysis ---"); 
 
+            if (!USER_ID) {
+                showCustomAlert(t.alert_no_user_id); return;
+            }
             if (gameTypeSelect.value === '') {
                 showCustomAlert(t.alert_select_game_type); return;
             }
@@ -789,11 +829,19 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  showCustomAlert(t.alert_no_attempts); return;
             }
             
-            // Списываем попытку локально. Она вернется в блоке catch, если будет ошибка
             attemptsLeft--;
             updateAttemptsText();
             isAnalyzing = true;
             
+            const attemptSent = await sendAttemptToServer();
+            if (!attemptSent) {
+                showCustomAlert(t.alert_backend_error);
+                attemptsLeft++;
+                updateAttemptsText();
+                isAnalyzing = false;
+                return;
+            }
+
             analyzeButton.innerHTML = t.analyzeButtonLoading;
             analyzeButton.disabled = true; 
             analyzeButton.style.marginBottom = '5px';
@@ -875,18 +923,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 
                 if (results.error === "no_odds_detected") {
                     showCustomAlert(t.alert_no_odds_detected);
-                    // --- ИЗМЕНЕНИЕ: Возвращаем попытку, так как анализ не удался ---
-                    attemptsLeft++;
-                    updateAttemptsText();
-                    // -----------------------------------------------------
                     resetToInitialState();
                 } else {
-                    // --- ИЗМЕНЕНИЕ: Отправляем на бэкенд, что попытка использована УСПЕШНО ---
-                    if (tg && tg.sendData) {
-                        tg.sendData(JSON.stringify({ action: "use_attempt" }));
-                        console.log("Sent 'use_attempt' action to backend.");
-                    }
-                    // -------------------------------------------------------------
                     displayResults(results);
                 }
 
@@ -901,10 +939,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     showCustomAlert(t.alert_api_error);
                 }
                 
-                // --- ИЗМЕНЕНИЕ: Возвращаем попытку, так как произошла ошибка ---
-                attemptsLeft++;
-                updateAttemptsText();
-                // ---------------------------------------------------------
                 resetToInitialState();
             } finally {
                 clearTimeout(timeoutId);
@@ -921,27 +955,38 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         
         analyzeButton.onclick = analyzeBet; 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- ИЗМЕНЕНИЕ: Получаем попытки из URL ---
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const attemptsFromUrl = urlParams.get('attempts_left');
-                if (attemptsFromUrl !== null && !isNaN(parseInt(attemptsFromUrl))) {
-                    attemptsLeft = parseInt(attemptsFromUrl, 10);
-                    console.log(`Attempts set from URL: ${attemptsLeft}`);
-                } else {
-                    console.log("No valid 'attempts_left' in URL, using default.");
-                }
-            } catch (e) {
-                console.error("Error parsing URL params for attempts:", e);
+        async function loadInitialAttempts() {
+            const t = translations[currentLang];
+            attemptsTextElement.textContent = t.attemptsLoading;
+            
+            if (!USER_ID) {
+                 showCustomAlert(t.alert_no_user_id);
+                 attemptsTextElement.textContent = t.attemptsError;
+                 return;
             }
-            // ----------------------------------------
 
+            try {
+                const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${USER_ID}`);
+                if (!response.ok) {
+                    throw new Error('Backend server error');
+                }
+                const data = await response.json();
+                attemptsLeft = data.attempts_left;
+                console.log(`Attempts set from API: ${attemptsLeft}`);
+                updateAttemptsText();
+            } catch (error) {
+                console.error("Failed to load attempts from backend:", error);
+                attemptsTextElement.textContent = t.attemptsError;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
-            updateAttemptsText(); // Теперь эта функция покажет актуальное число попыток
             setLanguage(currentLang);
+            loadInitialAttempts(); 
         });
 
     </script>
 </body>
 </html>
+
