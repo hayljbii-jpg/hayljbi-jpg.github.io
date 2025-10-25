@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ставки от AI</title>
     <style>
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #1c2738;
-            color: white; 
+            color: white;
             text-align: center;
             padding: 20px;
             margin: 0;
@@ -114,12 +114,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 15px; 
+            margin-bottom: 15px;
         }
         .upload-hint {
             font-size: 13px;
             color: #8a96a8;
-            margin-top: 10px; 
+            margin-top: 10px;
         }
         .primary-button {
             background-color: #00e676;
@@ -287,10 +287,10 @@
         }
         .event-name {
             font-size: 14px;
-            flex-basis: 50%;
+            flex-basis: 55%;
         }
         .event-progress-container {
-            flex-basis: 35%;
+            flex-basis: 30%;
             background-color: #1c2738;
             height: 8px;
             border-radius: 4px;
@@ -300,11 +300,31 @@
             background-color: #00e676;
             border-radius: 4px;
         }
+        .percentage-profit-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            flex-basis: 15%;
+            text-align: right;
+        }
         .event-percentage {
             font-size: 14px;
             font-weight: bold;
-            flex-basis: 10%;
-            text-align: right;
+        }
+        .profit-value {
+            font-size: 11px;
+            color: #00e676;
+            font-weight: 500;
+        }
+        /* --- ИЗМЕНЕНИЕ: Стили для нового заголовка --- */
+        .profit-header {
+            font-size: 14px;
+            color: #a0b0c8;
+            margin-top: 10px;
+            margin-bottom: -5px;
+            width: 100%;
+            max-width: 350px;
+            text-align: left;
         }
         .analytics-title {
             font-size: 12px;
@@ -387,8 +407,7 @@
         </select>
 
         <div id="resultsContainer" class="results-container hidden">
-            <!-- Сюда будут вставляться результаты из JS -->
-        </div>
+            </div>
 
         <div id="imagePreview" class="uploaded-image-container hidden">
             <img class="uploaded-image" src="" alt="Предварительный просмотр изображения">
@@ -419,20 +438,18 @@
 
     <p class="footer-text">Создано нейросетью BetGPT - © 2025</p>
 
-    <div id="customAlert" class="custom-alert hidden"></div>
+<div id="customAlert" class="custom-alert hidden"></div>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         
-        // --- ИЗМЕНЕНИЕ: ВАШ API-КЛЮЧ ОТ GEMINI ---
-        const GEMINI_API_KEY = "AIzaSyDo1fbHqoRxLqVxJkoRel58iG_bOvWLqnU"; // <-- Сюда вставлен ваш ключ
-
-        // --- Ваш секретный промпт, который будет добавлен к каждому запросу AI ---
+        const GEMINI_API_KEY = "AIzaSyDo1fbHqoRxLqVxJkoRel58iG_bOvWLqnU"; 
         const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен."; 
 
         let currentLang = 'ru';
+        // КОММЕНТАРИЙ: Значения по умолчанию, которые будут перезаписаны данными из URL.
         let attemptsLeft = 10;
         let totalAttempts = 10;
         let isAnalyzing = false; 
@@ -448,14 +465,39 @@
                 'tryAgainButton': '🔄 Выбрать другое изображение',
                 'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
                 'footerText': 'Создано нейросетью BetGPT - © 2025',
+                // --- ИЗМЕНЕНИЕ: Добавлен ключ для заголовка о прибыли ---
+                'profit_header': 'При вложенных 100$ вы заработаете:',
                 'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
                 'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.',
                 'alert_no_attempts': 'У вас закончились попытки на сегодня.',
                 'alert_api_key_missing': 'API ключ для Gemini не указан. Анализ невозможен.',
                 'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
-                // КОММЕНТАРИЙ: Добавлены ключи для языка запроса и системной инструкции
-                'analyze_prompt': 'Проанализируй эту ставку на {gameType}.',
-                'system_prompt': `Ты — профессиональный AI-аналитик спортивных событий BetGPT. Твоя задача — изучить команды, коэффициенты и другую информацию на скриншоте, чтобы дать прогноз. ${MY_CUSTOM_PROMPT ? `Дополнительно учти следующую инструкцию: "${MY_CUSTOM_PROMPT}".` : ''} Все текстовые поля в твоем JSON-ответе (такие как 'signal' и 'analytics') должны быть на русском языке. Верни ответ СТРОГО в формате JSON, который соответствует предоставленной схеме.`,
+                'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
+                'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
+                'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                // --- ИЗМЕНЕНИЕ: Промпт усилен, чтобы AI всегда включал коэффициенты ---
+                'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Тотал Больше 2.5 (1.85)", "probability": 75}, {"name": "Результат матча: П1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Фора Фенербахче +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the RUSSIAN language.**`,
                 'analysis_steps': [
                     'Анализируем изображение...',
                     'Собираем данные о командах...',
@@ -484,14 +526,37 @@
                 'tryAgainButton': '🔄 Choose another image',
                 'attemptsText': 'Attempts left today: {left} of {total}',
                 'footerText': 'Created by BetGPT neural network - © 2025',
+                'profit_header': 'With a $100 bet, you will earn:',
                 'alert_select_image': 'Please upload an event image first.',
                 'alert_select_game_type': 'Please select a game type first.',
                 'alert_no_attempts': 'You have no attempts left for today.',
                 'alert_api_key_missing': 'Gemini API key is not provided. Analysis is not possible.',
                 'alert_api_error': 'Error during analysis. Please check the console or try again later.',
-                 // КОММЕНТАРИЙ: Добавлены ключи для языка запроса и системной инструкции
+                'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
+                'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
+                'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
-                'system_prompt': `You are a professional AI sports analyst BetGPT. Your task is to study the teams, odds, and other information on the screenshot to provide a forecast. ${MY_CUSTOM_PROMPT ? `Additionally, consider this instruction: "${MY_CUSTOM_PROMPT}".` : ''} All text fields in your JSON response (such as 'signal' and 'analytics') must be in English. Respond STRICTLY in the JSON format that matches the provided schema.`,
+                'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Total Over 2.5 (1.85)", "probability": 75}, {"name": "Match Result: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the ENGLISH language.**`,
                  'analysis_steps': [
                     'Analyzing image...',
                     'Gathering team data...',
@@ -512,7 +577,6 @@
             }
         };
 
-        // --- Элементы DOM ---
         const imageUpload = document.getElementById('imageUpload');
         const uploadContainer = document.getElementById('uploadContainer');
         const imagePreviewContainer = document.getElementById('imagePreview');
@@ -605,8 +669,7 @@
                 imagePreviewContainer.classList.remove('hidden');
                 uploadContainer.classList.add('hidden');
                 
-                analyzeButton.classList.remove('hidden'); // КОММЕНТАРИЙ: Эта строка исправляет ошибку, показывая кнопку при загрузке нового фото
-                // КОММЕНТАРИЙ: Добавлено для сброса текста кнопки и состояния
+                analyzeButton.classList.remove('hidden'); 
                 analyzeButton.innerHTML = translations[currentLang].analyzeButton; 
                 isAnalyzing = false;
                 
@@ -655,12 +718,14 @@
         function displayResults(data) {
             const t = translations[currentLang];
             
+            const confidence = data.confidence || (data.events && data.events.length > 0 ? Math.max(...data.events.map(e => e.probability)) : 'N/A');
+
             resultsContainer.innerHTML = `
                 <div class="result-card">
                     <div class="result-card-header">
                         <div class="info-block">
                             <div class="card-title">${t.results_confidence}</div>
-                            <div class="confidence-value">${data.confidence || 'N/A'}%</div>
+                            <div class="confidence-value">${confidence}%</div>
                         </div>
                         <div class="info-block">
                             <div class="card-title">${t.results_signal}</div>
@@ -668,17 +733,38 @@
                         </div>
                     </div>
                 </div>
+                
+                <p class="profit-header">${t.profit_header}</p>
+                
                 <div class="result-card event-list">
                     <div class="card-title">${t.results_events}</div>
-                    ${(data.events || []).map(event => `
-                        <div class="event-item">
-                            <span class="event-name">${event.name}</span>
-                            <div class="event-progress-container">
-                                <div class="event-progress-bar" style="width: ${event.probability}%;"></div>
+                    ${(data.events || []).map(event => {
+                        let eventName = event.name;
+                        let profitText = '';
+                        const oddsMatch = eventName.match(/\(([^)]+)\)/);
+
+                        if (oddsMatch && oddsMatch[1]) {
+                            const odds = parseFloat(oddsMatch[1].replace(',', '.'));
+                            if (!isNaN(odds) && odds > 1) {
+                                const profit = (100 * (odds - 1)).toFixed(2);
+                                profitText = `<span class="profit-value">+${profit}$</span>`;
+                                eventName = eventName.replace(/\s*\([^)]+\)/, '').trim(); 
+                            }
+                        }
+
+                        return `
+                            <div class="event-item">
+                                <span class="event-name">${eventName}</span>
+                                <div class="event-progress-container">
+                                    <div class="event-progress-bar" style="width: ${event.probability}%;"></div>
+                                </div>
+                                <div class="percentage-profit-container">
+                                    <span class="event-percentage">${event.probability}%</span>
+                                    ${profitText}
+                                </div>
                             </div>
-                            <span class="event-percentage">${event.probability}%</span>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
                 <div class="result-card">
                     <div class="analytics-title">${t.results_analytics}</div>
@@ -688,33 +774,28 @@
             resultsContainer.classList.remove('hidden');
         }
 
-        // --- ИЗМЕНЕНИЕ: ВСЯ ФУНКЦИЯ 'analyzeBet' ЗАМЕНЕНА НА ЛОГИКУ GEMINI ---
         async function analyzeBet() {
             const t = translations[currentLang];
-            console.log("--- Starting Bet Analysis with Gemini 2.5 Flash ---"); 
+            console.log("--- Starting Bet Analysis ---"); 
 
             if (gameTypeSelect.value === '') {
-                console.warn("Validation failed: Game type not selected.");
-                showCustomAlert(t.alert_select_game_type);
-                return;
+                showCustomAlert(t.alert_select_game_type); return;
             }
-            
             if (!GEMINI_API_KEY) {
-                console.error("Initialization failed: Gemini API key is missing.");
-                showCustomAlert(t.alert_api_key_missing);
-                return;
+                showCustomAlert(t.alert_api_key_missing); return;
             }
             if (attemptsLeft <= 0) {
-                 console.warn("Validation failed: No attempts left.");
-                 showCustomAlert(t.alert_no_attempts);
-                 return;
+                 showCustomAlert(t.alert_no_attempts); return;
             }
+            
+            // КОММЕНТАРИЙ: Отправляем на бэкенд информацию о том, что попытка была использована.
+            // Бэкенд получит это сообщение и уменьшит счетчик в базе данных.
+            tg.sendData(JSON.stringify({ action: 'use_attempt' }));
             
             attemptsLeft--;
             updateAttemptsText();
             isAnalyzing = true;
             
-            console.log("UI state updated for analysis.");
             analyzeButton.innerHTML = t.analyzeButtonLoading;
             analyzeButton.disabled = true; 
             analyzeButton.style.marginBottom = '5px';
@@ -722,8 +803,6 @@
             tryAgainButton.classList.remove('hidden');
             tryAgainButton.disabled = true;
             imagePreviewContainer.classList.add('hidden');
-
-            // КОММЕНТАРИЙ: Блокируем выпадающий список на время анализа
             gameTypeSelect.disabled = true;
 
             let step = 0;
@@ -734,134 +813,101 @@
                 analysisStatusText.textContent = steps[step];
             }, 2000);
             
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); 
+
             try {
                 const imageBase64_full = imagePreview.src;
                 const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
-
-                // ИЗМЕНЕНИЕ: Получаем текст промпта и системной инструкции из объекта translations
-                // в зависимости от выбранного языка (currentLang)
-                const userPromptText = t.analyze_prompt.replace('{gameType}', gameTypeValue);
-                const systemPromptText = t.system_prompt;
+                
+                const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue);
+                const systemPromptText = translations[currentLang].system_prompt;
 
                 const mimeType = imageBase64_full.split(',')[0].split(':')[1].split(';')[0];
                 const base64Data = imageBase64_full.split(',')[1];
                 
-                // ИЗМЕНЕНО: Системная инструкция для Gemini
-                const systemInstruction = {
-                  parts: [{
-                    text: systemPromptText // ИЗМЕНЕНИЕ: Используем текст на выбранном языке
-                  }]
-                };
-
-                // ИЗМЕНЕНО: JSON-схема для Gemini. 
-                const responseSchema = {
-                  type: "OBJECT",
-                  properties: {
-                    "confidence": { type: "NUMBER" },
-                    "signal": { type: "STRING" },
-                    "events": {
-                      type: "ARRAY",
-                      items: {
-                        type: "OBJECT",
-                        properties: {
-                          "name": { type: "STRING" },
-                          "probability": { type: "NUMBER" }
-                        },
-                        required: ["name", "probability"]
-                      }
-                    },
-                    "analytics": { type: "STRING" }
-                  },
-                  required: ["confidence", "signal", "events", "analytics"]
-                };
-
-                // ИЗМЕНЕНО: Тело запроса для Gemini
                 const requestBody = {
-                  contents: [
-                    {
-                      parts: [
-                        { text: userPromptText }, // ИЗМЕНЕНИЕ: Используем текст на выбранном языке
-                        {
-                          inlineData: {
-                            mimeType: mimeType,
-                            data: base64Data
-                          }
-                        }
-                      ]
-                    }
-                  ],
-                  systemInstruction: systemInstruction,
-                  generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: responseSchema
+                  contents: [ { parts: [ { text: userPromptText }, { inlineData: { mimeType: mimeType, data: base64Data } } ] } ],
+                  systemInstruction: { parts: [{ text: systemPromptText }] },
+                  generationConfig: { 
+                      responseMimeType: "application/json", 
+                      responseSchema: {
+                          type: "OBJECT",
+                          properties: {
+                            "confidence": { "type": "NUMBER" }, "signal": { "type": "STRING" },
+                            "events": {
+                              "type": "ARRAY", "items": { "type": "OBJECT",
+                                "properties": { "name": { "type": "STRING" }, "probability": { "type": "NUMBER" } },
+                                "required": ["name", "probability"]
+                              }
+                            },
+                            "analytics": { "type": "STRING" }, "error": { "type": "STRING" }
+                          },
+                          required: ["analytics"] 
+                      }
                   }
                 };
                 
-                console.log("Sending request to Gemini API."); 
-
-				// ИЗМЕНЕНО: URL и заголовки для Gemini
-				const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+                console.log("Sending request to Gemini API...");
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody),
+                    signal: controller.signal
                 });
                 
-                console.log("Received response object from API:", response);
-                const responseText = await response.text();
-                console.log("Raw response text from API:", responseText);
+                clearTimeout(timeoutId);
 
+                const responseText = await response.text();
                 if (!response.ok) {
                     let errorData;
-                    try {
-                        errorData = JSON.parse(responseText);
-                    } catch (e) {
-                        errorData = { error: { message: "Failed to parse error response from API." } };
-                    }
-                    console.error('Gemini API Error Response:', errorData); 
+                    try { errorData = JSON.parse(responseText); } catch (e) { errorData = { error: { message: "Failed to parse error response." } }; }
                     throw new Error(errorData.error ? errorData.error.message : 'Network response was not ok');
                 }
 
                 const data = JSON.parse(responseText);
-                console.log("Parsed API response JSON:", data);
-                
-                // ИЗМЕНЕНО: Парсинг ответа от Gemini
-                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0].text) {
-                    console.error("Invalid response structure from Gemini API:", data);
-                    throw new Error("Не удалось извлечь контент из ответа API.");
+                if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    throw new Error("Invalid API response structure.");
                 }
                 
-                const messageContent = data.candidates[0].content.parts[0].text; 
-                console.log("Attempting to parse message content:", messageContent);
-                const results = JSON.parse(messageContent);
+                const results = JSON.parse(data.candidates[0].content.parts[0].text);
                 console.log("Successfully parsed analysis results:", results);
                 
-                displayResults(results);
+                if (results.error === "no_odds_detected") {
+                    showCustomAlert(t.alert_no_odds_detected);
+                    resetToInitialState();
+                } else {
+                    displayResults(results);
+                }
 
             } catch (error) {
-                console.error('--- ERROR during API call or processing ---');
-                console.error('Full error object:', error);
-                showCustomAlert(t.alert_api_error);
-                attemptsLeft++;
+                console.error('--- ERROR during API call ---', error);
+                
+                if (error.name === 'AbortError') {
+                    showCustomAlert(t.alert_timeout);
+                } else if (error?.message?.includes("User location is not supported")) {
+                    showCustomAlert(t.alert_location_not_supported);
+                } else {
+                    showCustomAlert(t.alert_api_error);
+                }
+                
+                // КОММЕНТАРИЙ: Возвращаем попытку обратно в интерфейсе, т.к. бэкенд не был уведомлен об успехе.
+                // При следующей перезагрузке данные синхронизируются.
+                attemptsLeft++; 
                 updateAttemptsText();
                 resetToInitialState();
             } finally {
-                console.log("--- Analysis process finished ---");
+                clearTimeout(timeoutId);
                 clearInterval(analysisInterval);
                 isAnalyzing = false;
                 analysisContainer.classList.add('hidden');
                 analyzeButton.classList.add('hidden');
-                
-                // КОММЕНТАРИЙ: Сбрасываем встроенный стиль отступа, чтобы он вернулся к 15px из CSS
                 analyzeButton.style.marginBottom = ''; 
-                
                 tryAgainButton.disabled = false;
-                
-                // КОММЕНТАРИЙ: Разблокируем выпадающий список после анализа
                 gameTypeSelect.disabled = false;
+                console.log("--- Analysis process finished ---");
             }
         }
         
@@ -869,9 +915,18 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('user_id');
             
+            // КОММЕНТАРИЙ: При загрузке страницы получаем параметры из URL, переданные бэкендом.
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialAttempts = urlParams.get('attempts_left');
+            const initialTotal = urlParams.get('total_attempts');
+            
+            // КОММЕНТАРИЙ: Если параметры в URL есть, обновляем переменные.
+            if (initialAttempts !== null && initialTotal !== null) {
+                attemptsLeft = parseInt(initialAttempts, 10);
+                totalAttempts = parseInt(initialTotal, 10);
+            }
+
             updateAttemptsText();
             setLanguage(currentLang);
         });
