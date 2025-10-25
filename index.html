@@ -996,8 +996,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 };
 
                 console.log("Sending request to Gemini API...");
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
-                // const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${GEMINI_API_KEY}`;
+                 // --- ИЗМЕНЕНИЕ: Возвращаем модель 2.5 flash ---
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+                // -----------------------------------------
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -1111,13 +1112,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
        // --- Обработчик кнопки анализа ---
         analyzeButton.onclick = analyzeBet;
 
-        // --- ИЗМЕНЕНИЕ: Функция "прогрева" бэкенда ---
+        // --- Функция "прогрева" бэкенда ---
         async function pingBackend() {
             if (!userId) return; // Не делаем пинг, если нет user_id
             console.log("Pinging backend to potentially bypass ngrok warning...");
             try {
                 // Делаем GET запрос, но не ждем и не обрабатываем ответ
-                fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
+                fetch(`${BACKEND_URL}/`, { // --- ИЗМЕНЕНИЕ: Пингуем корневой URL ---
                      method: 'GET',
                      cache: 'no-cache',
                      // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
@@ -1137,7 +1138,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         // ---------------------------------------------
 
 
-        // --- ИЗМЕНЕНИЕ: Функция загрузки начальных данных (попыток) ---
+        // --- Функция загрузки начальных данных (попыток) ---
         async function loadInitialAttempts() { // Убрали параметр retry
              const t = translations[currentLang];
              attemptsTextElement.textContent = t.attemptsTextLoading; // Показываем "Загрузка..."
@@ -1199,9 +1200,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
             // Если user_id найден, загружаем попытки
             if (userId) {
-                // --- ИЗМЕНЕНИЕ: Убрали прогрев и таймаут, сразу грузим попытки ---
-                loadInitialAttempts(); // Запускаем основную загрузку попыток
-                // -----------------------------------------------------------------
+                // --- ИЗМЕНЕНИЕ: Сначала делаем "прогрев", потом загружаем попытки ---
+                pingBackend(); // Запускаем "прогрев" (не ждем завершения)
+                // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
+                setTimeout(() => {
+                    loadInitialAttempts(); // Запускаем основную загрузку попыток
+                }, 150); // Увеличили немного паузу до 150 миллисекунд
+                // -------------------------------------------------------------
             } else {
                 console.error("User ID not found in URL or initDataUnsafe.");
                 attemptsLeft = -1; // Ставим ошибку
