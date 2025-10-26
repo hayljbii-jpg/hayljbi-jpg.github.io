@@ -192,11 +192,13 @@
             margin-top: 0;
             margin-bottom: 20px; /* Отступ снизу */
         }
+        /* --- ИЗМЕНЕНИЕ: Стиль для ошибки загрузки попыток --- */
         .attempts-error {
             background-color: #e53935; /* Красный */
             color: white;
             font-weight: 500;
         }
+        /* --------------------------------------------------- */
         .footer-text {
             font-size: 12px;
             color: #888;
@@ -449,54 +451,96 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const BACKEND_URL = 'https://wergune.duckdns.org'; // Адрес вашего VPS (с HTTPS)
+        // --- ИЗМЕНЕНИЕ: Установлен новый субдомен ---
+        const BACKEND_URL = 'https://wergune.duckdns.org';
+        // ------------------------------------------
 
-        // Ключ Gemini API и промпты удалены отсюда, они теперь на сервере
+        // --- УДАЛЕНО: API ключ и промпты Gemini. Теперь они на сервере. ---
 
         let currentLang = 'ru';
-        let attemptsLeft = -1;
+        let attemptsLeft = -1; // -1 означает, что попытки еще не загружены
         let totalAttempts = 10;
         let isAnalyzing = false;
         let userId = null;
 
         const translations = {
             'ru': {
-                'title': '💡 Ставки от AI', 'gameType': 'Тип игры',
+                'title': '💡 Ставки от AI',
+                'gameType': 'Тип игры',
                 'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Загрузите изображение события',
-                'uploadHint': 'Или просто вставьте скриншот (Ctrl + V)', 'analyzeButton': '🔍 Проанализировать ставку',
-                'analyzeButtonLoading': '⏳ Анализируем...', 'tryAgainButton': '🔄 Выбрать другое изображение',
-                'attemptsTextLoading': 'Загрузка попыток...', 'attemptsTextError': 'Ошибка загрузки попыток',
-                'attemptsText': 'Осталось попыток на сегодня: {left} из {total}', 'footerText': 'Создано нейросетью BetGPT - © 2025',
-                'profit_header': 'При вложенных 100$ вы заработаете:', 'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
-                'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.', 'alert_no_attempts': 'У вас закончились попытки на сегодня.',
+                'uploadHint': 'Или просто вставьте скриншот (Ctrl + V)',
+                'analyzeButton': '🔍 Проанализировать ставку',
+                'analyzeButtonLoading': '⏳ Анализируем...',
+                'tryAgainButton': '🔄 Выбрать другое изображение',
+                'attemptsTextLoading': 'Загрузка попыток...',
+                'attemptsTextError': 'Ошибка загрузки попыток',
+                'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
+                'footerText': 'Создано нейросетью BetGPT - © 2025',
+                'profit_header': 'При вложенных 100$ вы заработаете:',
+                'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
+                'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.',
+                'alert_no_attempts': 'У вас закончились попытки на сегодня.',
                 'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
                 'alert_backend_error': 'Ошибка связи с сервером. Попытка не была списана.',
+                'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
-                'alert_gemini_proxy_error': 'Ошибка при обращении к нейросети через сервер. Попробуйте позже.',
-                'analysis_steps': ['Анализируем изображение...','Собираем данные о командах...','Проводим ИИ анализ...','Высчитываем вероятности...'],
-                'results_confidence': 'УВЕРЕННОСТЬ AI', 'results_signal': 'НАДЁЖНЫЙ СИГНАЛ', 'results_events': '% СОБЫТИЙ',
+                'analysis_steps': [
+                    'Анализируем изображение...',
+                    'Собираем данные о командах...',
+                    'Проводим ИИ анализ...',
+                    'Высчитываем вероятности...'
+                ],
+                'results_confidence': 'УВЕРЕННОСТЬ AI',
+                'results_signal': 'НАДЁЖНЫЙ СИГНАЛ',
+                'results_events': '% СОБЫТИЙ',
                 'results_analytics': 'АИ АНАЛИТИКА',
-                'gameTypes': {'football': 'Футбол', 'basketball': 'Баскетбол', 'tennis': 'Теннис','hockey': 'Хоккей', 'volleyball': 'Волейбол', 'boxing': 'Бокс','mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Настольный теннис','baseball': 'Бейсбол', 'handball': 'Гандбол', 'rugby': 'Регби','cricket': 'Крикет', 'dota2': 'Dota 2', 'cs2': 'CS2'}
+                'gameTypes': {
+                    'football': 'Футбол', 'basketball': 'Баскетбол', 'tennis': 'Теннис',
+                    'hockey': 'Хоккей', 'volleyball': 'Волейбол', 'boxing': 'Бокс',
+                    'mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Настольный теннис',
+                    'baseball': 'Бейсбол', 'handball': 'Гандбол', 'rugby': 'Регби',
+                    'cricket': 'Крикет', 'dota2': 'Dota 2', 'cs2': 'CS2'
+                }
             },
             'en': {
-                 'title': '💡 AI Bets', 'gameType': 'Game Type',
-                 'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
-                 'uploadHint': 'Or just paste a screenshot (Ctrl + V)', 'analyzeButton': '🔍 Analyze bet',
-                 'analyzeButtonLoading': '⏳ Analyzing...', 'tryAgainButton': '🔄 Choose another image',
-                 'attemptsTextLoading': 'Loading attempts...', 'attemptsTextError': 'Failed to load attempts',
-                 'attemptsText': 'Attempts left today: {left} of {total}', 'footerText': 'Created by BetGPT neural network - © 2025',
-                 'profit_header': 'With a $100 bet, you will earn:', 'alert_select_image': 'Please upload an event image first.',
-                 'alert_select_game_type': 'Please select a game type first.', 'alert_no_attempts': 'You have no attempts left for today.',
-                 'alert_api_error': 'Error during analysis. Please check the console or try again later.',
-                 'alert_backend_error': 'Server communication error. Attempt was not used.',
-                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
-                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
-                 'alert_gemini_proxy_error': 'Error contacting AI via server. Please try again later.',
-                 'analysis_steps': ['Analyzing image...','Gathering team data...','Performing AI analysis...','Calculating probabilities...'],
-                'results_confidence': 'AI CONFIDENCE', 'results_signal': 'RELIABLE SIGNAL', 'results_events': '% OF EVENTS',
+                'title': '💡 AI Bets',
+                'gameType': 'Game Type',
+                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
+                'uploadHint': 'Or just paste a screenshot (Ctrl + V)',
+                'analyzeButton': '🔍 Analyze bet',
+                'analyzeButtonLoading': '⏳ Analyzing...',
+                'tryAgainButton': '🔄 Choose another image',
+                'attemptsTextLoading': 'Loading attempts...',
+                'attemptsTextError': 'Failed to load attempts',
+                'attemptsText': 'Attempts left today: {left} of {total}',
+                'footerText': 'Created by BetGPT neural network - © 2025',
+                'profit_header': 'With a $100 bet, you will earn:',
+                'alert_select_image': 'Please upload an event image first.',
+                'alert_select_game_type': 'Please select a game type first.',
+                'alert_no_attempts': 'You have no attempts left for today.',
+                'alert_api_error': 'Error during analysis. Please check the console or try again later.',
+                'alert_backend_error': 'Server communication error. Attempt was not used.',
+                'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
+                'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
+                'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
+                 'analysis_steps': [
+                    'Analyzing image...',
+                    'Gathering team data...',
+                    'Performing AI analysis...',
+                    'Calculating probabilities...'
+                ],
+                'results_confidence': 'AI CONFIDENCE',
+                'results_signal': 'RELIABLE SIGNAL',
+                'results_events': '% OF EVENTS',
                 'results_analytics': 'AI ANALYTICS',
-                'gameTypes': {'football': 'Football', 'basketball': 'Basketball', 'tennis': 'Tennis','hockey': 'Hockey', 'volleyball': 'Volleyball', 'boxing': 'Boxing','mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Table Tennis','baseball': 'Baseball', 'handball': 'Handball', 'rugby': 'Rugby','cricket': 'Cricket', 'dota2': 'Dota 2', 'cs2': 'CS2'}
+                'gameTypes': {
+                    'football': 'Football', 'basketball': 'Basketball', 'tennis': 'Tennis',
+                    'hockey': 'Hockey', 'volleyball': 'Volleyball', 'boxing': 'Boxing',
+                    'mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Table Tennis',
+                    'baseball': 'Baseball', 'handball': 'Handball', 'rugby': 'Rugby',
+                    'cricket': 'Cricket', 'dota2': 'Dota 2', 'cs2': 'CS2'
+                }
             }
         };
 
@@ -508,65 +552,92 @@
         const tryAgainButton = document.getElementById('tryAgainButton');
         const attemptsTextElement = document.getElementById('attemptsText');
         const gameTypeSelect = document.getElementById('gameType');
+
         const selectedLanguage = document.querySelector('.selected-language');
         const languageOptionsContainer = document.querySelector('.language-options');
         const languageOptions = document.querySelectorAll('.language-option');
         const selectedLangFlag = document.getElementById('selectedLangFlag');
         const selectedLangText = document.getElementById('selectedLangText');
+
         const analysisContainer = document.getElementById('analysisContainer');
         const analysisStatusText = document.getElementById('analysisStatusText');
         const resultsContainer = document.getElementById('resultsContainer');
         let analysisInterval;
 
+        // --- Функция для показа кастомного алерта ---
         function showCustomAlert(message) {
             const customAlert = document.getElementById('customAlert');
             customAlert.textContent = message;
             customAlert.classList.remove('hidden');
-            setTimeout(() => { customAlert.classList.add('hidden'); }, 3000);
+
+            setTimeout(() => {
+                customAlert.classList.add('hidden');
+            }, 3000); // Скрывать через 3 секунды
         }
 
+        // --- Функция для обновления состояния кнопки анализа ---
         function updateAnalyzeButtonState() {
             const imageLoaded = !imagePreviewContainer.classList.contains('hidden');
+            // Кнопка активна, если загружено изображение И попытки загружены (attemptsLeft !== -1) И попыток > 0
             analyzeButton.disabled = !imageLoaded || attemptsLeft <= 0 || attemptsLeft === -1;
         }
 
+        // --- Функция для обновления текста о попытках ---
         function updateAttemptsText() {
             const t = translations[currentLang];
-            if (attemptsLeft === -1) { /* Ошибка или загрузка */ }
-            else if (attemptsLeft >= 0) {
+            if (attemptsLeft === -1) {
+                // Попытки еще не загружены или ошибка загрузки
+                // attemptsTextElement.textContent = t.attemptsTextLoading; // Можно вернуть, если нужен текст "Загрузка..."
+            } else if (attemptsLeft >= 0) {
+                // Попытки успешно загружены
                 attemptsTextElement.classList.remove('attempts-error');
-                attemptsTextElement.textContent = t.attemptsText.replace('{left}', attemptsLeft).replace('{total}', totalAttempts);
+                attemptsTextElement.textContent = t.attemptsText
+                    .replace('{left}', attemptsLeft)
+                    .replace('{total}', totalAttempts);
             }
+             // Состояние кнопки анализа зависит от attemptsLeft
             updateAnalyzeButtonState();
         }
 
+        // --- Функция для установки языка интерфейса ---
         function setLanguage(lang) {
             const t = translations[lang];
             document.querySelector('h1').innerHTML = t.title;
             document.querySelector('#gameType option[disabled]').textContent = t.gameType;
             document.getElementById('uploadLabel').innerHTML = t.uploadLabel;
             document.querySelector('.upload-hint').innerHTML = t.uploadHint;
+
             analyzeButton.innerHTML = isAnalyzing ? t.analyzeButtonLoading : t.analyzeButton;
             tryAgainButton.innerHTML = t.tryAgainButton;
 
+            // Обновляем текст попыток с учетом текущего состояния (загрузка/ошибка/значение)
             if (attemptsLeft === -1 && attemptsTextElement.classList.contains('attempts-error')) {
                  attemptsTextElement.textContent = t.attemptsTextError;
             } else if (attemptsLeft === -1) {
                  attemptsTextElement.textContent = t.attemptsTextLoading;
-            } else { updateAttemptsText(); }
+            } else {
+                 updateAttemptsText(); // Обновит текст с {left} и {total}
+            }
+
 
             document.querySelector('.footer-text').textContent = t.footerText;
+
             const gameOptions = gameTypeSelect.querySelectorAll('option:not([disabled])');
             gameOptions.forEach(option => {
                 const gameKey = option.value;
-                if (t.gameTypes[gameKey]) option.textContent = t.gameTypes[gameKey];
+                if (t.gameTypes[gameKey]) {
+                    option.textContent = t.gameTypes[gameKey];
+                }
             });
+
+             // Обновляем заголовки в уже отображенных результатах, если они есть
             if (!resultsContainer.classList.contains('hidden')) {
                 const confidenceTitle = resultsContainer.querySelector('.info-block:nth-child(1) .card-title');
                 const signalTitle = resultsContainer.querySelector('.info-block:nth-child(2) .card-title');
                 const profitHeader = resultsContainer.querySelector('.profit-header');
                 const eventsTitle = resultsContainer.querySelector('.event-list .card-title');
                 const analyticsTitle = resultsContainer.querySelector('.result-card:last-child .analytics-title');
+
                 if (confidenceTitle) confidenceTitle.textContent = t.results_confidence;
                 if (signalTitle) signalTitle.textContent = t.results_signal;
                 if (profitHeader) profitHeader.textContent = t.profit_header;
@@ -575,7 +646,11 @@
             }
         }
 
-        selectedLanguage.addEventListener('click', () => languageOptionsContainer.classList.toggle('show'));
+        // --- Обработчики смены языка ---
+        selectedLanguage.addEventListener('click', () => {
+            languageOptionsContainer.classList.toggle('show');
+        });
+
         languageOptions.forEach(option => {
             option.addEventListener('click', () => {
                 currentLang = option.dataset.lang;
@@ -585,187 +660,473 @@
                 languageOptionsContainer.classList.remove('show');
             });
         });
+
+        // Скрывать опции языка при клике вне элемента
         window.addEventListener('click', (e) => {
-            if (!document.querySelector('.language-select').contains(e.target)) languageOptionsContainer.classList.remove('show');
+            if (!document.querySelector('.language-select').contains(e.target)) {
+                languageOptionsContainer.classList.remove('show');
+            }
         });
 
+        // --- Функция показа изображения ---
         function showImage(file) {
-            resultsContainer.classList.add('hidden');
-            analysisContainer.classList.add('hidden');
-            analyzeButton.classList.remove('hidden');
+            resultsContainer.classList.add('hidden'); // Скрываем предыдущие результаты
+            analysisContainer.classList.add('hidden'); // Скрываем прогресс-бар анализа
+            analyzeButton.classList.remove('hidden'); // Показываем кнопку анализа
             analyzeButton.innerHTML = translations[currentLang].analyzeButton;
             isAnalyzing = false;
+
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
-                imagePreviewContainer.classList.remove('hidden');
-                uploadContainer.classList.add('hidden');
-                updateAnalyzeButtonState();
-                tryAgainButton.classList.remove('hidden');
+                imagePreviewContainer.classList.remove('hidden'); // Показываем превью
+                uploadContainer.classList.add('hidden'); // Скрываем блок загрузки
+
+                updateAnalyzeButtonState(); // Обновляем состояние кнопки (активна/неактивна)
+                tryAgainButton.classList.remove('hidden'); // Показываем кнопку "Выбрать другое"
             };
             reader.readAsDataURL(file);
         }
 
+        // --- Обработчики загрузки изображения ---
         imageUpload.addEventListener('change', (event) => {
-            if (event.target.files && event.target.files[0]) showImage(event.target.files[0]);
+            if (event.target.files && event.target.files[0]) {
+                showImage(event.target.files[0]);
+            }
         });
+
         document.addEventListener('paste', (event) => {
             const items = (event.clipboardData || event.originalEvent.clipboardData).items;
             for (let index in items) {
                 const item = items[index];
-                if (item.kind === 'file' && item.type.startsWith('image/')) showImage(item.getAsFile());
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    showImage(item.getAsFile());
+                }
             }
         });
 
+        // --- Функция сброса состояния ---
         function resetToInitialState() {
-            imageUpload.value = ''; isAnalyzing = false;
-            imagePreviewContainer.classList.add('hidden');
-            resultsContainer.classList.add('hidden');
-            analysisContainer.classList.add('hidden');
-            uploadContainer.classList.remove('hidden');
-            analyzeButton.innerHTML = translations[currentLang].analyzeButton;
-            analyzeButton.classList.remove('hidden');
-            analyzeButton.style.marginBottom = '';
-            tryAgainButton.classList.add('hidden');
-            tryAgainButton.disabled = false;
-            gameTypeSelect.disabled = false;
-            gameTypeSelect.classList.remove('hidden');
-            updateAnalyzeButtonState();
+            imageUpload.value = ''; // Сбрасываем input file
+            isAnalyzing = false;
+
+            imagePreviewContainer.classList.add('hidden'); // Скрываем превью
+            resultsContainer.classList.add('hidden'); // Скрываем результаты
+            analysisContainer.classList.add('hidden'); // Скрываем прогресс-бар
+            uploadContainer.classList.remove('hidden'); // Показываем блок загрузки
+
+            analyzeButton.innerHTML = translations[currentLang].analyzeButton; // Возвращаем текст кнопки
+            analyzeButton.classList.remove('hidden'); // Показываем кнопку
+            analyzeButton.style.marginBottom = ''; // Возвращаем отступ кнопки
+
+            tryAgainButton.classList.add('hidden'); // Скрываем кнопку "Выбрать другое"
+            tryAgainButton.disabled = false; // Разблокируем ее на всякий случай
+            gameTypeSelect.disabled = false; // Разблокируем выбор типа игры
+            gameTypeSelect.classList.remove('hidden'); // Показываем выбор типа игры
+
+            updateAnalyzeButtonState(); // Обновляем состояние кнопки анализа (станет неактивной)
         }
+
+        // --- Обработчик кнопки "Выбрать другое изображение" ---
         tryAgainButton.addEventListener('click', resetToInitialState);
 
+
+        // --- Функция отображения результатов анализа ---
         function displayResults(data) {
             const t = translations[currentLang];
+
+             // Ищем уверенность: сначала в поле confidence, потом максимальную из events
             const confidence = data.confidence || (data.events && data.events.length > 0 ? Math.max(...data.events.map(e => e.probability || 0)) : 'N/A');
+
             resultsContainer.innerHTML = `
-                <div class="result-card"><div class="result-card-header"><div class="info-block"><div class="card-title">${t.results_confidence}</div><div class="confidence-value">${confidence}%</div></div><div class="info-block"><div class="card-title">${t.results_signal}</div><div class="signal-value">${data.signal || 'N/A'}</div></div></div></div>
+                <div class="result-card">
+                    <div class="result-card-header">
+                        <div class="info-block">
+                            <div class="card-title">${t.results_confidence}</div>
+                            <div class="confidence-value">${confidence}%</div>
+                        </div>
+                        <div class="info-block">
+                            <div class="card-title">${t.results_signal}</div>
+                            <div class="signal-value">${data.signal || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+
                 <p class="profit-header">${t.profit_header}</p>
-                <div class="result-card event-list"><div class="card-title">${t.results_events}</div>${(data.events || []).map(event => { let eventName = event.name || ''; let profitText = ''; const oddsMatch = eventName.match(/\(([\d.,]+)\)/); if (oddsMatch && oddsMatch[1]) { const odds = parseFloat(oddsMatch[1].replace(',', '.')); if (!isNaN(odds) && odds > 1) { const profit = (100 * (odds - 1)).toFixed(2); profitText = `<span class="profit-value">+${profit}$</span>`; eventName = eventName.replace(/\s*\([\d.,]+\)/, '').trim(); } else { eventName = eventName.replace(/\s*\([\d.,]+\)/, '').trim(); } } const probability = typeof event.probability === 'number' ? event.probability : 0; return `<div class="event-item"><span class="event-name">${eventName || 'Событие не определено'}</span><div class="event-progress-container"><div class="event-progress-bar" style="width: ${probability}%;"></div></div><div class="percentage-profit-container"><span class="event-percentage">${probability}%</span> ${profitText}</div></div>`; }).join('')}</div>
-                <div class="result-card"><div class="analytics-title">${t.results_analytics}</div><p class="analytics-text">${data.analytics || 'Аналитика недоступна.'}</p></div>`;
-            resultsContainer.classList.remove('hidden');
+
+                <div class="result-card event-list">
+                    <div class="card-title">${t.results_events}</div>
+                    ${(data.events || []).map(event => {
+                        let eventName = event.name || ''; // Убедимся, что event.name существует
+                        let profitText = '';
+                        // Ищем коэффициент в скобках (число, возможно с точкой или запятой)
+                        const oddsMatch = eventName.match(/\(([\d.,]+)\)/);
+
+                        if (oddsMatch && oddsMatch[1]) {
+                            // Заменяем запятую на точку и парсим число
+                            const odds = parseFloat(oddsMatch[1].replace(',', '.'));
+                            if (!isNaN(odds) && odds > 1) {
+                                const profit = (100 * (odds - 1)).toFixed(2);
+                                profitText = `<span class="profit-value">+${profit}$</span>`;
+                                // Удаляем коэффициент из названия события
+                                eventName = eventName.replace(/\s*\([\d.,]+\)/, '').trim();
+                            } else {
+                                 // Если не удалось распарсить коэффициент, просто удаляем скобки
+                                 eventName = eventName.replace(/\s*\([\d.,]+\)/, '').trim();
+                            }
+                        }
+
+                        // Убедимся, что probability существует и является числом
+                        const probability = typeof event.probability === 'number' ? event.probability : 0;
+
+                        return `
+                            <div class="event-item">
+                                <span class="event-name">${eventName || 'Событие не определено'}</span>
+                                <div class="event-progress-container">
+                                    <div class="event-progress-bar" style="width: ${probability}%;"></div>
+                                </div>
+                                <div class="percentage-profit-container">
+                                    <span class="event-percentage">${probability}%</span>
+                                    ${profitText}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="result-card">
+                    <div class="analytics-title">${t.results_analytics}</div>
+                    <p class="analytics-text">${data.analytics || 'Аналитика недоступна.'}</p>
+                </div>
+            `;
+            resultsContainer.classList.remove('hidden'); // Показываем блок с результатами
         }
 
+        // --- Функция отправки запроса на списание попытки ---
         async function sendAttemptToServer() {
             const t = translations[currentLang];
-            if (!userId) { console.error("User ID not found, cannot send attempt usage."); showCustomAlert(t.alert_backend_error); return false; }
-            console.log(`Sending /use_attempt for user ${userId} to ${BACKEND_URL}`);
+            if (!userId) {
+                console.error("User ID not found, cannot send attempt usage.");
+                showCustomAlert(t.alert_backend_error); // Показываем общую ошибку
+                return false; // Не удалось отправить
+            }
+             console.log(`Sending /use_attempt for user ${userId} to ${BACKEND_URL}`);
             try {
                 const response = await fetch(`${BACKEND_URL}/use_attempt`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                        'ngrok-skip-browser-warning': 'true'
+                        // ------------------------------------------
+                    },
                     body: JSON.stringify({ user_id: userId })
                 });
+
+                // --- ИЗМЕНЕНИЕ: Обрабатываем ответ сервера ---
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
+                    // Если сервер ответил ошибкой (например, 400 - нет попыток)
+                    const errorData = await response.json().catch(() => ({})); // Пытаемся получить JSON ошибки
                     console.error('Failed to send attempt usage:', response.status, errorData);
-                    showCustomAlert(errorData.error || t.alert_backend_error); return false;
+                    showCustomAlert(errorData.error || t.alert_backend_error); // Показываем ошибку от сервера или общую
+                    return false; // Не удалось списать
                 }
+
+                // Успешно списали
                 const result = await response.json();
                 console.log('Attempt usage sent successfully:', result);
                 if (typeof result.attempts_remaining === 'number') {
-                     attemptsLeft = result.attempts_remaining; updateAttemptsText();
+                     attemptsLeft = result.attempts_remaining; // Обновляем локальный счетчик
+                     updateAttemptsText(); // Обновляем отображение
                 }
-                return true;
+                return true; // Успешно списали
             } catch (error) {
                 console.error('Network error sending attempt usage:', error);
-                showCustomAlert(t.alert_backend_error); return false;
+                showCustomAlert(t.alert_backend_error); // Показываем общую ошибку
+                return false; // Не удалось отправить/списать
             }
         }
 
+
+       // --- ИЗМЕНЕНИЕ: Функция анализа ставки (теперь через бэкенд) ---
        async function analyzeBet() {
             const t = translations[currentLang];
-            console.log("--- Starting Bet Analysis via Proxy ---");
-            if (attemptsLeft === -1) { showCustomAlert(t.attemptsTextError); return; }
-            if (gameTypeSelect.value === '') { showCustomAlert(t.alert_select_game_type); return; }
-            if (!imagePreview.src || imagePreviewContainer.classList.contains('hidden')) { showCustomAlert(t.alert_select_image); return; }
-            if (attemptsLeft <= 0) { showCustomAlert(t.alert_no_attempts); return; }
+            console.log("--- Starting Bet Analysis via Backend ---");
 
-            isAnalyzing = true; analyzeButton.innerHTML = t.analyzeButtonLoading; analyzeButton.disabled = true;
-            tryAgainButton.disabled = true; gameTypeSelect.disabled = true; analyzeButton.style.marginBottom = '5px';
+            // --- Блок проверок перед отправкой запроса (без изменений) ---
+            if (attemptsLeft === -1) {
+                showCustomAlert(t.attemptsTextError); return;
+            }
+            if (gameTypeSelect.value === '') {
+                showCustomAlert(t.alert_select_game_type); return;
+            }
+            if (!imagePreview.src || imagePreviewContainer.classList.contains('hidden')) {
+                 showCustomAlert(t.alert_select_image); return;
+            }
+            if (attemptsLeft <= 0) {
+                  showCustomAlert(t.alert_no_attempts); return;
+            }
+
+            // --- Блок UI: Блокируем интерфейс и показываем загрузку ---
+            isAnalyzing = true;
+            analyzeButton.innerHTML = t.analyzeButtonLoading;
+            analyzeButton.disabled = true;
+            tryAgainButton.disabled = true;
+            gameTypeSelect.disabled = true;
+            analyzeButton.style.marginBottom = '5px';
             analysisContainer.classList.remove('hidden');
 
+            // --- ШАГ 1: Списываем попытку на сервере ---
             const attemptSent = await sendAttemptToServer();
             if (!attemptSent) {
-                console.log("Attempt usage failed, cancelling analysis."); isAnalyzing = false;
-                analyzeButton.innerHTML = t.analyzeButton; tryAgainButton.disabled = false; gameTypeSelect.disabled = false;
-                analyzeButton.style.marginBottom = ''; analysisContainer.classList.add('hidden'); updateAnalyzeButtonState();
+                // Если списать попытку не удалось, останавливаем анализ и разблокируем интерфейс
+                console.log("Attempt usage failed, cancelling analysis.");
+                 isAnalyzing = false;
+                 analyzeButton.innerHTML = t.analyzeButton;
+                 tryAgainButton.disabled = false;
+                 gameTypeSelect.disabled = false;
+                 analyzeButton.style.marginBottom = '';
+                 analysisContainer.classList.add('hidden');
+                 updateAnalyzeButtonState(); // Перепроверит состояние кнопки
                 return;
             }
 
-            let step = 0; const steps = t.analysis_steps; analysisStatusText.textContent = steps[step];
+            // --- ШАГ 2: Если попытка списана, отправляем запрос на анализ ---
+            let step = 0;
+            const steps = t.analysis_steps;
+            analysisStatusText.textContent = steps[step];
             if (analysisInterval) clearInterval(analysisInterval);
-            analysisInterval = setInterval(() => { step = (step + 1) % steps.length; analysisStatusText.textContent = steps[step]; }, 2000);
-            const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 45000);
+            analysisInterval = setInterval(() => {
+                step = (step + 1) % steps.length;
+                analysisStatusText.textContent = steps[step];
+            }, 2000);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 45000); // Таймаут 45 секунд
 
             try {
-                const imageBase64_full = imagePreview.src;
-                const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
-                const mimeType = imageBase64_full.split(',')[0].split(':')[1].split(';')[0];
-                const base64Data = imageBase64_full.split(',')[1];
-                const requestBody = { user_id: userId, image_data: base64Data, mime_type: mimeType, game_type: gameTypeValue, lang: currentLang };
-                console.log("Sending request to backend proxy..."); const proxyUrl = `${BACKEND_URL}/analyze_proxy`;
-                const response = await fetch(proxyUrl, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                    body: JSON.stringify(requestBody), signal: controller.signal
+                // --- Готовим данные для отправки на наш бэкенд ---
+                const requestBody = {
+                    image_data: imagePreview.src, // Изображение в base64
+                    game_type: gameTypeSelect.options[gameTypeSelect.selectedIndex].text, // Название игры
+                    lang: currentLang // Текущий язык 'ru' или 'en'
+                };
+
+                console.log("Sending request to backend proxy...");
+                // --- Отправляем запрос на наш новый эндпоинт /analyze_image ---
+                const response = await fetch(`${BACKEND_URL}/analyze_image`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify(requestBody),
+                    signal: controller.signal // Для возможности отмены по таймауту
                 });
-                clearTimeout(timeoutId);
-                const results = await response.json(); console.log("Raw response from proxy:", results);
+
+                clearTimeout(timeoutId); // Отменяем таймаут, если ответ пришел
+
+                const responseText = await response.text(); // Читаем ответ как текст
+                console.log("Raw backend response:", responseText); // Логируем сырой ответ
+
                 if (!response.ok) {
-                    console.error("Error response from proxy:", response.status, results);
-                    showCustomAlert(results?.message || results?.error || t.alert_gemini_proxy_error);
-                    throw new Error(results?.error || 'Proxy response was not ok');
+                    // Обрабатываем ошибки, которые вернул наш бэкенд
+                    let errorData = { error: { message: `Backend Error: ${response.status}` } };
+                    try {
+                        errorData = JSON.parse(responseText);
+                        // Ищем специфическое сообщение об ошибке местоположения
+                         if (errorData?.error?.message?.includes("User location is not supported")) {
+                             throw new Error("User location is not supported");
+                         }
+                    } catch (e) { /* Игнорируем ошибку парсинга, используем errorData по умолчанию */ }
+                    // Создаем ошибку с сообщением от бэкенда
+                    throw new Error(errorData.error ? errorData.error.message : 'Backend response was not ok');
                 }
-                console.log("Successfully parsed analysis results from proxy:", results);
-                if (results.error === "no_odds_detected") { showCustomAlert(t.alert_no_odds_detected); resetToInitialState(); }
-                else { displayResults(results); analyzeButton.classList.add('hidden'); analysisContainer.classList.add('hidden'); tryAgainButton.disabled = false; gameTypeSelect.disabled = false; }
+
+                // --- Парсим успешный ответ от бэкенда ---
+                let data;
+                try {
+                     data = JSON.parse(responseText); // Ответ бэкенда должен быть уже готовым JSON от Gemini
+                } catch (e) {
+                     console.error("Failed to parse backend JSON response:", e);
+                     throw new Error("Invalid JSON response from backend.");
+                }
+
+                // --- Проверяем структуру ответа (такая же, как была раньше от Gemini) ---
+                if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    console.error("Invalid backend API response structure:", data);
+                    throw new Error("Invalid API response structure from backend.");
+                }
+
+                // Извлекаем и парсим вложенный JSON, как и раньше
+                let results;
+                const jsonText = data.candidates[0].content.parts[0].text;
+                 try {
+                     results = JSON.parse(jsonText);
+                 } catch (e) {
+                     console.error("Failed to parse inner JSON from backend response:", e, "JSON Text:", jsonText);
+                      const markdownJsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
+                      if (markdownJsonMatch && markdownJsonMatch[1]) {
+                          try {
+                              results = JSON.parse(markdownJsonMatch[1]);
+                               console.log("Successfully parsed markdown JSON from backend.");
+                          } catch (e2) {
+                               console.error("Failed to parse even markdown JSON from backend:", e2);
+                               throw new Error("Invalid inner JSON format from backend.");
+                          }
+                      } else {
+                           throw new Error("Invalid inner JSON format from backend.");
+                      }
+                 }
+
+                console.log("Successfully parsed analysis results from backend:", results);
+
+                // --- Отображаем результаты или ошибку "no_odds_detected" ---
+                if (results.error === "no_odds_detected") {
+                    showCustomAlert(t.alert_no_odds_detected);
+                    resetToInitialState(); // Возвращаем к началу (попытка списана)
+                } else {
+                    displayResults(results); // Показываем результаты
+                    analyzeButton.classList.add('hidden');
+                    analysisContainer.classList.add('hidden');
+                    tryAgainButton.disabled = false;
+                    gameTypeSelect.disabled = false;
+                }
+
             } catch (error) {
-                 console.error('--- ERROR during proxy call ---', error);
-                 if (error.name === 'AbortError') { showCustomAlert(t.alert_timeout); }
-                 else { showCustomAlert(t.alert_gemini_proxy_error); }
-                 isAnalyzing = false; analyzeButton.innerHTML = t.analyzeButton; tryAgainButton.disabled = false;
-                 gameTypeSelect.disabled = false; analyzeButton.style.marginBottom = ''; analysisContainer.classList.add('hidden');
+                 console.error('--- ERROR during backend API call ---', error);
+
+                if (error.name === 'AbortError') {
+                    showCustomAlert(t.alert_timeout);
+                } else if (error?.message?.includes("User location is not supported")) {
+                    showCustomAlert(t.alert_location_not_supported);
+                } else {
+                    showCustomAlert(t.alert_api_error); // Общая ошибка
+                }
+
+                 // Сброс интерфейса после ошибки
+                 isAnalyzing = false;
+                 analyzeButton.innerHTML = t.analyzeButton;
+                 tryAgainButton.disabled = false;
+                 gameTypeSelect.disabled = false;
+                 analyzeButton.style.marginBottom = '';
+                 analysisContainer.classList.add('hidden');
                  updateAnalyzeButtonState();
+
             } finally {
-                clearTimeout(timeoutId); clearInterval(analysisInterval);
-                console.log("--- Proxy Analysis process finished ---");
+                clearTimeout(timeoutId);
+                clearInterval(analysisInterval);
+                console.log("--- Backend Analysis process finished ---");
             }
         }
+
+       // --- Обработчик кнопки анализа ---
         analyzeButton.onclick = analyzeBet;
 
+        // --- Функция "прогрева" бэкенда ---
         async function pingBackend() {
-            if (!userId) return; console.log("Pinging backend to potentially bypass ngrok warning...");
-            try { fetch(`${BACKEND_URL}/`, { method: 'GET', cache: 'no-cache', headers: { 'ngrok-skip-browser-warning': 'true' } }).catch(err => { console.log("Ping request finished (errors ignored)."); }); }
-            catch (error) { console.log("Ping request failed (error ignored)."); }
+            if (!userId) return; // Не делаем пинг, если нет user_id
+            console.log("Pinging backend to potentially bypass ngrok warning...");
+            try {
+                // Делаем GET запрос, но не ждем и не обрабатываем ответ
+                fetch(`${BACKEND_URL}/`, { // --- ИЗМЕНЕНИЕ: Пингуем корневой URL ---
+                     method: 'GET',
+                     cache: 'no-cache',
+                     // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                     headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                     }
+                     // ------------------------------------------
+                 }).catch(err => {
+                     // Игнорируем любые ошибки, включая ошибки парсинга HTML
+                     console.log("Ping request finished (errors ignored).");
+                 });
+            } catch (error) {
+                 // Также игнорируем ошибки
+                 console.log("Ping request failed (error ignored).");
+            }
         }
+        // ---------------------------------------------
 
-        async function loadInitialAttempts() {
-             const t = translations[currentLang]; attemptsTextElement.textContent = t.attemptsTextLoading;
-             attemptsTextElement.classList.remove('attempts-error'); console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId}`);
+
+        // --- Функция загрузки начальных данных (попыток) ---
+        async function loadInitialAttempts() { // Убрали параметр retry
+             const t = translations[currentLang];
+             attemptsTextElement.textContent = t.attemptsTextLoading; // Показываем "Загрузка..."
+             attemptsTextElement.classList.remove('attempts-error');
+             console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId}`);
+
              try {
                  const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
-                     method: 'GET', cache: 'no-cache', headers: { 'ngrok-skip-browser-warning': 'true' } });
-                 if (!response.ok) { console.error(`Failed to load attempts: ${response.status}`); throw new Error(`HTTP error ${response.status}`); }
-                 const data = await response.json(); console.log("Attempts loaded:", data);
-                 if (typeof data.attempts_left === 'number') { attemptsLeft = data.attempts_left; updateAttemptsText(); }
-                 else { throw new Error("Invalid 'attempts_left' format in response"); }
+                     method: 'GET',
+                     cache: 'no-cache', // Добавим, чтобы избежать кэширования
+                     // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                     headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                     }
+                     // ------------------------------------------
+                 });
+                 if (!response.ok) {
+                      console.error(`Failed to load attempts: ${response.status}`);
+                      throw new Error(`HTTP error ${response.status}`);
+                 }
+                 const data = await response.json(); // Попытка распарсить JSON
+                 console.log("Attempts loaded:", data);
+                 if (typeof data.attempts_left === 'number') {
+                     attemptsLeft = data.attempts_left;
+                     updateAttemptsText(); // Обновляем текст с полученным значением
+                 } else {
+                      throw new Error("Invalid 'attempts_left' format in response");
+                 }
              } catch (error) {
-                 console.error('Failed to load initial attempts:', error); attemptsLeft = -1;
-                 attemptsTextElement.textContent = t.attemptsTextError; attemptsTextElement.classList.add('attempts-error');
-                 updateAnalyzeButtonState();
+                 console.error('Failed to load initial attempts:', error);
+
+                 // --- ИЗМЕНЕНИЕ: Убрали повтор, сразу показываем ошибку ---
+                 attemptsLeft = -1; // Ставим -1, чтобы показать ошибку
+                 attemptsTextElement.textContent = t.attemptsTextError; // Показываем текст ошибки
+                 attemptsTextElement.classList.add('attempts-error'); // Добавляем класс ошибки
+                 updateAnalyzeButtonState(); // Обновляем состояние кнопки (будет неактивна)
+                 // ----------------------------------------------------
              }
          }
 
+
+        // --- Инициализация при загрузке страницы ---
         document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
-            const urlParams = new URLSearchParams(window.location.search); userId = urlParams.get('user_id');
-            if (!userId && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id?.toString(); }
-            console.log("User ID:", userId); setLanguage(currentLang);
-            if (userId) { pingBackend(); setTimeout(() => { loadInitialAttempts(); }, 150); }
-            else { console.error("User ID not found in URL or initDataUnsafe."); attemptsLeft = -1;
-                attemptsTextElement.textContent = translations[currentLang].attemptsTextError; attemptsTextElement.classList.add('attempts-error');
-                updateAnalyzeButtonState(); }
+
+            // Пытаемся получить user_id из параметров URL
+            const urlParams = new URLSearchParams(window.location.search);
+            userId = urlParams.get('user_id'); // Ищем user_id=...
+
+             // Если не нашли user_id=, пытаемся получить из tg.initDataUnsafe (менее надежно)
+            if (!userId && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                 userId = tg.initDataUnsafe.user.id?.toString();
+            }
+
+            console.log("User ID:", userId);
+
+            // Устанавливаем язык по умолчанию
+            setLanguage(currentLang);
+
+            // Если user_id найден, загружаем попытки
+            if (userId) {
+                // --- ИЗМЕНЕНИЕ: Сначала делаем "прогрев", потом загружаем попытки ---
+                pingBackend(); // Запускаем "прогрев" (не ждем завершения)
+                // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
+                setTimeout(() => {
+                    loadInitialAttempts(); // Запускаем основную загрузку попыток
+                }, 150); // Увеличили немного паузу до 150 миллисекунд
+                // -------------------------------------------------------------
+            } else {
+                console.error("User ID not found in URL or initDataUnsafe.");
+                attemptsLeft = -1; // Ставим ошибку
+                attemptsTextElement.textContent = translations[currentLang].attemptsTextError;
+                attemptsTextElement.classList.add('attempts-error');
+                updateAnalyzeButtonState(); // Кнопка будет неактивна
+            }
         });
 
     </script>
 </body>
 </html>
-
