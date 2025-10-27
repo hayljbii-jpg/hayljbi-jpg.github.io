@@ -822,7 +822,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             updateAnalyzeButtonState(); // Обновляем состояние кнопки анализа (станет неактивной)
         }
 
-        // --- Обработчик кнопки "Выбрать другое изображение" ---
+// --- Обработчик кнопки "Выбрать другое изображение" ---
         tryAgainButton.addEventListener('click', resetToInitialState);
 
 
@@ -874,12 +874,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                         // Убедимся, что probability существует и является числом
                         const probability = typeof event.probability === 'number' ? event.probability : 0;
 
+                        // --- ИЗМЕНЕНИЕ: Исправлена структура HTML для корректного отображения ---
+                        // Блок с процентами вынесен из блока с прогресс-баром и убран лишний разделитель.
                         return `
                             <div class="event-item">
                                 <span class="event-name">${eventName || 'Событие не определено'}</span>
                                 <div class="event-progress-container">
                                     <div class="event-progress-bar" style="width: ${probability}%;"></div>
-                                ----------------------------------------------------
+                                </div>
                                 <div class="percentage-profit-container">
                                     <span class="event-percentage">${probability}%</span>
                                     ${profitText}
@@ -897,6 +899,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         }
 
 		// --- Функция отправки запроса на списание попытки ---
+        async function sendAttemptToServer() {
+            const t = translations[currentLang];
+            if (!userId) {
         async function sendAttemptToServer() {
             const t = translations[currentLang];
             if (!userId) {
