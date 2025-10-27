@@ -491,6 +491,7 @@
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
+                'alert_model_overloaded': 'Нейросеть перегружена. Пожалуйста, попробуйте через 5 минут.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
                 'system_prompt': `You are BetGPT, an AI Analyst.
 
@@ -553,8 +554,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
+                'alert_model_overloaded': 'The neural network is overloaded. Please try again in 5 minutes.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
-                 'system_prompt': `You are BetGPT, an AI Analyst.
+                'system_prompt': `You are BetGPT, an AI Analyst.
 
 **Task 1: Validate Image**
 1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
@@ -1133,16 +1135,15 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 }
 
             } catch (error) {
-                 console.error('--- ERROR during API call ---', error);
-
-                // Возвращать попытку на сервере НЕ НУЖНО,
-                // так как ошибка (например, геолокация) - это тоже результат, на который потрачена попытка.
-                // await returnAttemptToServer();
-
+				 console.error('--- ERROR during API call ---', error);
+                
+                // --- ИЗМЕНЕНИЕ: Добавлена проверка на ошибку "model is overloaded" ---
                 if (error.name === 'AbortError') {
                     showCustomAlert(t.alert_timeout);
                 } else if (error?.message?.includes("User location is not supported")) {
                     showCustomAlert(t.alert_location_not_supported);
+                } else if (error?.message?.includes("The model is overloaded")) { // <-- ВОТ НОВАЯ ПРОВЕРКА
+                    showCustomAlert(t.alert_model_overloaded); // Показываем новое сообщение
                 } else {
                     showCustomAlert(t.alert_api_error); // Общая ошибка API
                 }
@@ -1150,7 +1151,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  // Сброс интерфейса после ошибки
                  isAnalyzing = false;
                  analyzeButton.innerHTML = t.analyzeButton;
-                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
                  tryAgainButton.disabled = false;
                  gameTypeSelect.disabled = false;
                  analyzeButton.style.marginBottom = '';
