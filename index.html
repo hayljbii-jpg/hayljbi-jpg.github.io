@@ -455,7 +455,10 @@
         const BACKEND_URL = 'https://wergune.duckdns.org';
         // ------------------------------------------
 
-        // --- УДАЛЕНО: API ключ и промпты Gemini. Теперь они на сервере. ---
+        // --- ИЗМЕНЕНИЕ: Ключ API удален из клиента. Он теперь на сервере. ---
+        // const GEMINI_API_KEY = "AIzaSyDo1fbHqoRxLqVxJkoRel58iG_bOvWLqnU";
+        // -----------------------------------------------------------------
+        const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен.";
 
         let currentLang = 'ru';
         let attemptsLeft = -1; // -1 означает, что попытки еще не загружены
@@ -480,11 +483,34 @@
                 'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
                 'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.',
                 'alert_no_attempts': 'У вас закончились попытки на сегодня.',
+                'alert_api_key_missing': 'API ключ для Gemini не указан. Анализ невозможен.', // <--- Это сообщение больше не должно появляться
                 'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
                 'alert_backend_error': 'Ошибка связи с сервером. Попытка не была списана.',
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Тотал Больше 2.5 (1.85)", "probability": 75}, {"name": "Результат матча: П1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Фора Фенербахче +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the RUSSIAN language.**`,
                 'analysis_steps': [
                     'Анализируем изображение...',
                     'Собираем данные о командах...',
@@ -519,11 +545,34 @@
                 'alert_select_image': 'Please upload an event image first.',
                 'alert_select_game_type': 'Please select a game type first.',
                 'alert_no_attempts': 'You have no attempts left for today.',
+                'alert_api_key_missing': 'Gemini API key is not provided. Analysis is not possible.', // <--- Это сообщение больше не должно появляться
                 'alert_api_error': 'Error during analysis. Please check the console or try again later.',
                 'alert_backend_error': 'Server communication error. Attempt was not used.',
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                 'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Total Over 2.5 (1.85)", "probability": 75}, {"name": "Match Result: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the ENGLISH language.**`,
                  'analysis_steps': [
                     'Analyzing image...',
                     'Gathering team data...',
@@ -848,14 +897,13 @@
         }
 
 
-       // --- ИЗМЕНЕНИЕ: Функция анализа ставки (теперь через бэкенд) ---
+       // --- Функция анализа ставки (вызов Gemini) ---
        async function analyzeBet() {
             const t = translations[currentLang];
-            console.log("--- Starting Bet Analysis via Backend ---");
+            console.log("--- Starting Bet Analysis ---");
 
-            // --- Блок проверок перед отправкой запроса (без изменений) ---
             if (attemptsLeft === -1) {
-                showCustomAlert(t.attemptsTextError); return;
+                showCustomAlert(t.attemptsTextError); return; // Показываем ошибку, если попытки не загружены
             }
             if (gameTypeSelect.value === '') {
                 showCustomAlert(t.alert_select_game_type); return;
@@ -863,38 +911,50 @@
             if (!imagePreview.src || imagePreviewContainer.classList.contains('hidden')) {
                  showCustomAlert(t.alert_select_image); return;
             }
-            if (attemptsLeft <= 0) {
+             // --- ИЗМЕНЕНИЕ: Удалена проверка API ключа на клиенте ---
+             /*
+             if (!GEMINI_API_KEY || GEMINI_API_KEY === "ВАШ_GEMINI_API_КЛЮЧ") {
+                 showCustomAlert(t.alert_api_key_missing); return;
+             }
+             */
+             // ----------------------------------------------------
+             if (attemptsLeft <= 0) {
                   showCustomAlert(t.alert_no_attempts); return;
-            }
+             }
 
-            // --- Блок UI: Блокируем интерфейс и показываем загрузку ---
-            isAnalyzing = true;
+            // --- ИЗМЕНЕНИЕ: Сначала списываем попытку на сервере ---
+            isAnalyzing = true; // Ставим флаг анализа до запроса
             analyzeButton.innerHTML = t.analyzeButtonLoading;
             analyzeButton.disabled = true;
             tryAgainButton.disabled = true;
-            gameTypeSelect.disabled = true;
+            gameTypeSelect.disabled = true; // Блокируем интерфейс перед запросом
             analyzeButton.style.marginBottom = '5px';
-            analysisContainer.classList.remove('hidden');
+            analysisContainer.classList.remove('hidden'); // Показываем прогресс анализа ДО запроса списания
 
-            // --- ШАГ 1: Списываем попытку на сервере ---
             const attemptSent = await sendAttemptToServer();
+
             if (!attemptSent) {
                 // Если списать попытку не удалось, останавливаем анализ и разблокируем интерфейс
                 console.log("Attempt usage failed, cancelling analysis.");
+                // Сбрасываем флаги и кнопки, но НЕ сбрасываем картинку
                  isAnalyzing = false;
                  analyzeButton.innerHTML = t.analyzeButton;
+                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
                  tryAgainButton.disabled = false;
                  gameTypeSelect.disabled = false;
                  analyzeButton.style.marginBottom = '';
                  analysisContainer.classList.add('hidden');
                  updateAnalyzeButtonState(); // Перепроверит состояние кнопки
+                 // Ошибку покажет сама функция sendAttemptToServer()
                 return;
             }
+            // Если попытка успешно списана, продолжаем анализ Gemini
 
-            // --- ШАГ 2: Если попытка списана, отправляем запрос на анализ ---
+            // --- Дальнейший код анализа Gemini ---
             let step = 0;
             const steps = t.analysis_steps;
             analysisStatusText.textContent = steps[step];
+            // Убираем старый интервал, если он был
             if (analysisInterval) clearInterval(analysisInterval);
             analysisInterval = setInterval(() => {
                 step = (step + 1) % steps.length;
@@ -902,111 +962,142 @@
             }, 2000);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 45000); // Таймаут 45 секунд
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
 
             try {
-                // --- Готовим данные для отправки на наш бэкенд ---
+                const imageBase64_full = imagePreview.src;
+                const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
+
+                const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue); // Всегда EN для промпта
+                // Язык для системного промпта берем текущий (чтобы ответ был на нужном языке)
+                const systemPromptText = translations[currentLang].system_prompt;
+
+
+                const mimeType = imageBase64_full.split(',')[0].split(':')[1].split(';')[0];
+                const base64Data = imageBase64_full.split(',')[1];
+
                 const requestBody = {
-                    image_data: imagePreview.src, // Изображение в base64
-                    game_type: gameTypeSelect.options[gameTypeSelect.selectedIndex].text, // Название игры
-                    lang: currentLang // Текущий язык 'ru' или 'en'
+                  contents: [ { parts: [ { text: userPromptText }, { inlineData: { mimeType: mimeType, data: base64Data } } ] } ],
+                  systemInstruction: { parts: [{ text: systemPromptText }] },
+                  generationConfig: {
+                      responseMimeType: "application/json",
+                      responseSchema: {
+                          type: "OBJECT",
+                          properties: {
+                            "confidence": { "type": "NUMBER" }, "signal": { "type": "STRING" },
+                            "events": {
+                              "type": "ARRAY", "items": { "type": "OBJECT",
+                                "properties": { "name": { "type": "STRING" }, "probability": { "type": "NUMBER" } },
+                                "required": ["name", "probability"]
+                              }
+                            },
+                            "analytics": { "type": "STRING" }, "error": { "type": "STRING" }
+                          },
+                          required: ["analytics"] // analytics - обязательное поле в ответе
+                      }
+                  }
                 };
 
-                console.log("Sending request to backend proxy...");
-                // --- Отправляем запрос на наш новый эндпоинт /analyze_image ---
-                const response = await fetch(`${BACKEND_URL}/analyze_image`, {
+                console.log("Sending request to Gemini API proxy...");
+                 // --- ИЗМЕНЕНИЕ: Запрос идет на наш бэкенд, а не напрямую в Google ---
+                const apiUrl = `${BACKEND_URL}/analyze_gemini`;
+                // -----------------------------------------------------------------
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true'
-                    },
-                    body: JSON.stringify(requestBody),
-                    signal: controller.signal // Для возможности отмены по таймауту
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody), // <--- Отправляем тело запроса для Gemini на наш бэкенд
+                    signal: controller.signal
                 });
 
                 clearTimeout(timeoutId); // Отменяем таймаут, если ответ пришел
 
                 const responseText = await response.text(); // Читаем ответ как текст
-                console.log("Raw backend response:", responseText); // Логируем сырой ответ
+                console.log("Raw Gemini response:", responseText); // Логируем сырой ответ
 
                 if (!response.ok) {
-                    // Обрабатываем ошибки, которые вернул наш бэкенд
-                    let errorData = { error: { message: `Backend Error: ${response.status}` } };
+                    let errorData = { error: { message: `Gemini API Error: ${response.status}` } };
                     try {
                         errorData = JSON.parse(responseText);
-                        // Ищем специфическое сообщение об ошибке местоположения
+                        // Ищем сообщение об ошибке местоположения
                          if (errorData?.error?.message?.includes("User location is not supported")) {
-                             throw new Error("User location is not supported");
+                             throw new Error("User location is not supported"); // Перебрасываем специфическую ошибку
                          }
-                    } catch (e) { /* Игнорируем ошибку парсинга, используем errorData по умолчанию */ }
-                    // Создаем ошибку с сообщением от бэкенда
-                    throw new Error(errorData.error ? errorData.error.message : 'Backend response was not ok');
+                    } catch (e) { /* Ошибка парсинга JSON - используем errorData по умолчанию */ }
+                    throw new Error(errorData.error ? errorData.error.message : 'Gemini network response was not ok');
                 }
 
-                // --- Парсим успешный ответ от бэкенда ---
                 let data;
-                try {
-                     data = JSON.parse(responseText); // Ответ бэкенда должен быть уже готовым JSON от Gemini
-                } catch (e) {
-                     console.error("Failed to parse backend JSON response:", e);
-                     throw new Error("Invalid JSON response from backend.");
-                }
+                 try {
+                     data = JSON.parse(responseText); // Парсим JSON ответа Gemini
+                 } catch (e) {
+                     console.error("Failed to parse Gemini JSON response:", e);
+                     throw new Error("Invalid JSON response from Gemini.");
+                 }
 
-                // --- Проверяем структуру ответа (такая же, как была раньше от Gemini) ---
+
                 if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    console.error("Invalid backend API response structure:", data);
-                    throw new Error("Invalid API response structure from backend.");
+                    // Если структура ответа не та, что ожидаем
+                    console.error("Invalid Gemini API response structure:", data);
+                    throw new Error("Invalid API response structure.");
                 }
 
-                // Извлекаем и парсим вложенный JSON, как и раньше
+                // Извлекаем текст JSON из ответа Gemini и парсим его
                 let results;
                 const jsonText = data.candidates[0].content.parts[0].text;
                  try {
                      results = JSON.parse(jsonText);
                  } catch (e) {
-                     console.error("Failed to parse inner JSON from backend response:", e, "JSON Text:", jsonText);
+                     console.error("Failed to parse inner JSON from Gemini:", e, "JSON Text:", jsonText);
+                     // Пытаемся извлечь markdown JSON, если он там есть
                       const markdownJsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
                       if (markdownJsonMatch && markdownJsonMatch[1]) {
                           try {
                               results = JSON.parse(markdownJsonMatch[1]);
-                               console.log("Successfully parsed markdown JSON from backend.");
+                               console.log("Successfully parsed markdown JSON.");
                           } catch (e2) {
-                               console.error("Failed to parse even markdown JSON from backend:", e2);
-                               throw new Error("Invalid inner JSON format from backend.");
+                               console.error("Failed to parse even markdown JSON:", e2);
+                               throw new Error("Invalid inner JSON format from Gemini.");
                           }
                       } else {
-                           throw new Error("Invalid inner JSON format from backend.");
+                           throw new Error("Invalid inner JSON format from Gemini.");
                       }
                  }
 
-                console.log("Successfully parsed analysis results from backend:", results);
 
-                // --- Отображаем результаты или ошибку "no_odds_detected" ---
+                console.log("Successfully parsed analysis results:", results);
+
                 if (results.error === "no_odds_detected") {
                     showCustomAlert(t.alert_no_odds_detected);
-                    resetToInitialState(); // Возвращаем к началу (попытка списана)
+                    resetToInitialState(); // Возвращаем к началу, но попытка уже списана
                 } else {
                     displayResults(results); // Показываем результаты
-                    analyzeButton.classList.add('hidden');
-                    analysisContainer.classList.add('hidden');
-                    tryAgainButton.disabled = false;
-                    gameTypeSelect.disabled = false;
+                     // Интерфейс после успешного анализа
+                    analyzeButton.classList.add('hidden'); // Скрываем кнопку анализа
+                    analysisContainer.classList.add('hidden'); // Скрываем прогресс
+                    tryAgainButton.disabled = false; // Разблокируем "Выбрать другое"
+                    gameTypeSelect.disabled = false; // Разблокируем тип игры
                 }
 
             } catch (error) {
-                 console.error('--- ERROR during backend API call ---', error);
+                 console.error('--- ERROR during Gemini API call ---', error);
+
+                // Возвращаем попытку на сервере, если Gemini упал
+                // (Это необязательно, зависит от вашей логики - тратится ли попытка на сам факт запроса к Gemini)
+                // await returnAttemptToServer(); // Раскомментируйте, если нужно возвращать
 
                 if (error.name === 'AbortError') {
                     showCustomAlert(t.alert_timeout);
                 } else if (error?.message?.includes("User location is not supported")) {
                     showCustomAlert(t.alert_location_not_supported);
                 } else {
-                    showCustomAlert(t.alert_api_error); // Общая ошибка
+                    showCustomAlert(t.alert_api_error); // Общая ошибка API Gemini
                 }
 
-                 // Сброс интерфейса после ошибки
+                 // Сброс интерфейса после ошибки Gemini
                  isAnalyzing = false;
                  analyzeButton.innerHTML = t.analyzeButton;
+                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
                  tryAgainButton.disabled = false;
                  gameTypeSelect.disabled = false;
                  analyzeButton.style.marginBottom = '';
@@ -1014,9 +1105,10 @@
                  updateAnalyzeButtonState();
 
             } finally {
-                clearTimeout(timeoutId);
-                clearInterval(analysisInterval);
-                console.log("--- Backend Analysis process finished ---");
+                clearTimeout(timeoutId); // Очищаем таймаут
+                clearInterval(analysisInterval); // Очищаем интервал статуса
+                // isAnalyzing = false; // Уже сброшено в блоках try/catch
+                console.log("--- Gemini Analysis process finished ---");
             }
         }
 
@@ -1116,7 +1208,7 @@
                 // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
                 setTimeout(() => {
                     loadInitialAttempts(); // Запускаем основную загрузку попыток
-                }, 150); // Увеличили немного паузу до 150 миллисекунд
+                }, 150); // Увеличили немного паузу до 150 миллисекенд
                 // -------------------------------------------------------------
             } else {
                 console.error("User ID not found in URL or initDataUnsafe.");
@@ -1130,3 +1222,4 @@
     </script>
 </body>
 </html>
+
