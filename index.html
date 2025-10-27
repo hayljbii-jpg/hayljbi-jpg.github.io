@@ -871,16 +871,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                         const probability = typeof event.probability === 'number' ? event.probability : 0;
 
                         return `
-                            <div class="event-item">
-                                <span class="event-name">${eventName || 'Событие не определено'}</span>
-                                <div class="event-progress-container">
-                                    <div class="event-progress-bar" style="width: ${probability}%;"></div>
-                                ----------------------------------------------------
-                                <div class="percentage-profit-container">
-                                    <span class="event-percentage">${probability}%</span>
-                                    ${profitText}
-                                </div>
-                            </div>
+							<div class="event-item">
+								<span class="event-name">${eventName || 'Событие не определено'}</span>
+								<div class="event-progress-container">
+									<div class="event-progress-bar" style="width: ${probability}%;"></div>
+								</div>
+								<div class="percentage-profit-container">
+									<span class="event-percentage">${probability}%</span>
+									${profitText}
+								</div>
+							</div>
                         `;
                     }).join('')}
                 </div>
