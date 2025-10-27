@@ -1135,7 +1135,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 }
 
             } catch (error) {
-				 console.error('--- ERROR during API call ---', error);
+				console.error('--- ERROR during API call ---', error);
                 
                 // --- ИЗМЕНЕНИЕ: Добавлена проверка на ошибку "model is overloaded" ---
                 if (error.name === 'AbortError') {
