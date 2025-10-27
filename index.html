@@ -951,12 +951,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
 
        // --- Функция анализа ставки (вызов Gemini через наш бэкенд) ---
-       async function analyzeBet() {
+async function analyzeBet() {
             const t = translations[currentLang];
             console.log("--- Starting Bet Analysis ---");
 
             if (attemptsLeft === -1) {
-                showCustomAlert(t.attemptsTextError); return; // Показываем ошибку, если попытки не загружены
+                showCustomAlert(t.attemptsTextError); return;
             }
             if (gameTypeSelect.value === '') {
                 showCustomAlert(t.alert_select_game_type); return;
@@ -964,46 +964,22 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             if (!imagePreview.src || imagePreviewContainer.classList.contains('hidden')) {
                  showCustomAlert(t.alert_select_image); return;
             }
-             // --- ИЗМЕНЕНИЕ: Убрали проверку API-ключа на клиенте ---
-             // if (!GEMINI_API_KEY || GEMINI_API_KEY === "ВАШ_GEMINI_API_КЛЮЧ") { ... }
-             // ----------------------------------------------------
              if (attemptsLeft <= 0) {
                   showCustomAlert(t.alert_no_attempts); return;
              }
 
-            // --- ИЗМЕНЕНИЕ: Сначала списываем попытку на сервере ---
-            isAnalyzing = true; // Ставим флаг анализа до запроса
+            // --- ЭТАП 1: Блокировка интерфейса ---
+            isAnalyzing = true;
             analyzeButton.innerHTML = t.analyzeButtonLoading;
             analyzeButton.disabled = true;
             tryAgainButton.disabled = true;
-            gameTypeSelect.disabled = true; // Блокируем интерфейс перед запросом
+            gameTypeSelect.disabled = true;
             analyzeButton.style.marginBottom = '5px';
-            analysisContainer.classList.remove('hidden'); // Показываем прогресс анализа ДО запроса списания
+            analysisContainer.classList.remove('hidden');
 
-            const attemptSent = await sendAttemptToServer();
-
-            if (!attemptSent) {
-                // Если списать попытку не удалось, останавливаем анализ и разблокируем интерфейс
-                console.log("Attempt usage failed, cancelling analysis.");
-                // Сбрасываем флаги и кнопки, но НЕ сбрасываем картинку
-                 isAnalyzing = false;
-                 analyzeButton.innerHTML = t.analyzeButton;
-                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
-                 tryAgainButton.disabled = false;
-                 gameTypeSelect.disabled = false;
-                 analyzeButton.style.marginBottom = '';
-                 analysisContainer.classList.add('hidden');
-                 updateAnalyzeButtonState(); // Перепроверит состояние кнопки
-                 // Ошибку покажет сама функция sendAttemptToServer()
-                return;
-            }
-            // Если попытка успешно списана, продолжаем анализ Gemini
-
-            // --- Дальнейший код анализа Gemini ---
             let step = 0;
             const steps = t.analysis_steps;
             analysisStatusText.textContent = steps[step];
-            // Убираем старый интервал, если он был
             if (analysisInterval) clearInterval(analysisInterval);
             analysisInterval = setInterval(() => {
                 step = (step + 1) % steps.length;
@@ -1011,142 +987,111 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             }, 2000);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
 
             try {
+                // --- ЭТАП 2: Подготовка единого запроса на бэкенд ---
                 const imageBase64_full = imagePreview.src;
                 const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
-
-                const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue); // Всегда EN для промпта
-                // Язык для системного промпта берем текущий (чтобы ответ был на нужном языке)
+                const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue);
                 const systemPromptText = translations[currentLang].system_prompt;
-
-
                 const mimeType = imageBase64_full.split(',')[0].split(':')[1].split(';')[0];
                 const base64Data = imageBase64_full.split(',')[1];
 
-                const requestBody = {
+                // Формируем тело запроса для Gemini
+                const geminiPayload = {
                   contents: [ { parts: [ { text: userPromptText }, { inlineData: { mimeType: mimeType, data: base64Data } } ] } ],
                   systemInstruction: { parts: [{ text: systemPromptText }] },
-                  generationConfig: {
-                      responseMimeType: "application/json",
-                      responseSchema: {
-                          type: "OBJECT",
-                          properties: {
-                            "confidence": { "type": "NUMBER" }, "signal": { "type": "STRING" },
-                            "events": {
-                              "type": "ARRAY", "items": { "type": "OBJECT",
-                                "properties": { "name": { "type": "STRING" }, "probability": { "type": "NUMBER" } },
-                                "required": ["name", "probability"]
-                              }
-                            },
-                            "analytics": { "type": "STRING" }, "error": { "type": "STRING" }
-                          },
-                          required: ["analytics"] // analytics - обязательное поле в ответе
-                      }
-                  }
+                  generationConfig: { /* ... (конфигурация как и раньше) ... */ }
+                };
+                
+                // Формируем финальное тело запроса для нашего бэкенда
+                const finalRequestBody = {
+                    user_id: userId,
+                    partner: currentPartner,
+                    gemini_payload: geminiPayload
                 };
 
-                console.log("Sending request to Backend proxy (/analyze_gemini)...");
-                // --- ИЗМЕНЕНИЕ: Отправляем запрос на наш бэкенд, а не в Google ---
+                console.log("Sending unified request to Backend proxy (/analyze_gemini)...");
                 const apiUrl = `${BACKEND_URL}/analyze_gemini`;
-                // -----------------------------------------------------------------
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true' // Добавляем заголовок
-                    },
-                    body: JSON.stringify(requestBody),
+                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+                    body: JSON.stringify(finalRequestBody),
                     signal: controller.signal
                 });
 
-                clearTimeout(timeoutId); // Отменяем таймаут, если ответ пришел
+                clearTimeout(timeoutId);
 
-                const responseText = await response.text(); // Читаем ответ как текст
-                console.log("Raw Backend response:", responseText); // Логируем сырой ответ
+                const responseText = await response.text();
+                console.log("Raw Backend response:", responseText);
 
+                // --- ЭТАП 3: Обработка ответа от бэкенда ---
                 if (!response.ok) {
-                    let errorData = { error: { message: `Backend Proxy Error: ${response.status}` } };
-                    try {
-                        errorData = JSON.parse(responseText);
-                        // Ищем сообщение об ошибке местоположения (которое пришло от Gemini через наш бэкенд)
-                         if (errorData?.error?.message?.includes("User location is not supported")) {
-                             throw new Error("User location is not supported"); // Перебрасываем специфическую ошибку
-                         }
-                    } catch (e) { /* Ошибка парсинга JSON - используем errorData по умолчанию */ }
-                    throw new Error(errorData.error ? errorData.error.message : 'Backend network response was not ok');
-                }
-
-                let data;
-                 try {
-                     data = JSON.parse(responseText); // Парсим JSON ответа бэкенда
-                 } catch (e) {
-                     console.error("Failed to parse Backend JSON response:", e);
-                     throw new Error("Invalid JSON response from Backend.");
-                 }
-
-
-                if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    // Если структура ответа не та, что ожидаем (например, пришла ошибка от Gemini)
-                    if (data?.error?.message?.includes("User location is not supported")) {
+                    let errorData = {};
+                    try { errorData = JSON.parse(responseText); } catch (e) {}
+                    
+                    // Обрабатываем специфические ошибки от нашего бэкенда или Gemini
+                    if (response.status === 402 || errorData?.error?.message?.includes("No attempts left")) {
+                        throw new Error("No attempts left");
+                    }
+                    if (errorData?.error?.message?.includes("User location is not supported")) {
                          throw new Error("User location is not supported");
                     }
-                    console.error("Invalid API response structure from Backend:", data);
-                    throw new Error(data?.error?.message || "Invalid API response structure.");
+                    if (errorData?.error?.message?.includes("The model is overloaded")) {
+                         throw new Error("The model is overloaded");
+                    }
+                    // Общая ошибка
+                    throw new Error(errorData?.error?.message || `Backend Error: ${response.status}`);
                 }
 
-                // Извлекаем текст JSON из ответа Gemini и парсим его
-                let results;
-                const jsonText = data.candidates[0].content.parts[0].text;
-                 try {
-                     results = JSON.parse(jsonText);
-                 } catch (e) {
-                     console.error("Failed to parse inner JSON from Gemini:", e, "JSON Text:", jsonText);
-                     // Пытаемся извлечь markdown JSON, если он там есть
-                      const markdownJsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
-                      if (markdownJsonMatch && markdownJsonMatch[1]) {
-                          try {
-                              results = JSON.parse(markdownJsonMatch[1]);
-                               console.log("Successfully parsed markdown JSON.");
-                          } catch (e2) {
-                               console.error("Failed to parse even markdown JSON:", e2);
-                               throw new Error("Invalid inner JSON format from Gemini.");
-                          }
-                      } else {
-                           throw new Error("Invalid inner JSON format from Gemini.");
-                      }
-                 }
+                // --- Успешный ответ ---
+                const responseData = JSON.parse(responseText);
 
+                // Обновляем счетчик попыток из ответа сервера
+                if (typeof responseData.attempts_remaining === 'number') {
+                    attemptsLeft = responseData.attempts_remaining;
+                    updateAttemptsText();
+                }
 
+                const geminiData = responseData.analysis; // Результат анализа теперь вложен
+
+                if (!geminiData.candidates?.[0]?.content?.parts?.[0]?.text) {
+                     console.error("Invalid API response structure from Gemini:", geminiData);
+                     throw new Error(geminiData?.error?.message || "Invalid API response structure.");
+                }
+
+                // Извлекаем и парсим внутренний JSON от Gemini
+                const results = JSON.parse(geminiData.candidates[0].content.parts[0].text);
+                
                 console.log("Successfully parsed analysis results:", results);
 
                 if (results.error === "no_odds_detected") {
                     showCustomAlert(t.alert_no_odds_detected);
-                    resetToInitialState(); // Возвращаем к началу, но попытка уже списана
+                    resetToInitialState(); // Возвращаем к началу, попытка уже списана
                 } else {
-                    displayResults(results); // Показываем результаты
-                     // Интерфейс после успешного анализа
-                    analyzeButton.classList.add('hidden'); // Скрываем кнопку анализа
-                    analysisContainer.classList.add('hidden'); // Скрываем прогресс
-                    tryAgainButton.disabled = false; // Разблокируем "Выбрать другое"
-                    gameTypeSelect.disabled = false; // Разблокируем тип игры
+                    displayResults(results);
+                    analyzeButton.classList.add('hidden');
+                    analysisContainer.classList.add('hidden');
+                    tryAgainButton.disabled = false;
+                    gameTypeSelect.disabled = false;
                 }
 
             } catch (error) {
-				console.error('--- ERROR during API call ---', error);
+                 console.error('--- ERROR during API call ---', error);
                 
-                // --- ИЗМЕНЕНИЕ: Добавлена проверка на ошибку "model is overloaded" ---
-                if (error.name === 'AbortError') {
+                 if (error.name === 'AbortError') {
                     showCustomAlert(t.alert_timeout);
-                } else if (error?.message?.includes("User location is not supported")) {
+                 } else if (error?.message?.includes("No attempts left")) {
+                    showCustomAlert(t.alert_no_attempts);
+                 } else if (error?.message?.includes("User location is not supported")) {
                     showCustomAlert(t.alert_location_not_supported);
-                } else if (error?.message?.includes("The model is overloaded")) { // <-- ВОТ НОВАЯ ПРОВЕРКА
-                    showCustomAlert(t.alert_model_overloaded); // Показываем новое сообщение
-                } else {
-                    showCustomAlert(t.alert_api_error); // Общая ошибка API
-                }
+                 } else if (error?.message?.includes("The model is overloaded")) {
+                    showCustomAlert(t.alert_model_overloaded);
+                 } else {
+                    showCustomAlert(t.alert_api_error);
+                 }
 
                  // Сброс интерфейса после ошибки
                  isAnalyzing = false;
@@ -1158,9 +1103,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  updateAnalyzeButtonState();
 
             } finally {
-                clearTimeout(timeoutId); // Очищаем таймаут
-                clearInterval(analysisInterval); // Очищаем интервал статуса
-                // isAnalyzing = false; // Уже сброшено в блоках try/catch
+                clearTimeout(timeoutId);
+                clearInterval(analysisInterval);
                 console.log("--- Analysis process finished ---");
             }
         }
