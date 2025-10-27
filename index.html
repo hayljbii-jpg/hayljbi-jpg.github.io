@@ -951,7 +951,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
 
        // --- Функция анализа ставки (вызов Gemini через наш бэкенд) ---
-		async function analyzeBet() {
+// --- ИСПРАВЛЕННАЯ ВЕРСИЯ ФУНКЦИИ ---
+       async function analyzeBet() {
             const t = translations[currentLang];
             console.log("--- Starting Bet Analysis ---");
 
@@ -1068,26 +1069,24 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                      throw new Error(geminiData?.error?.message || "Invalid API response structure.");
                 }
 
-                // --- ИЗМЕНЕНИЕ: Добавлена логика для очистки Markdown ---
+                // --- НОВАЯ УПРОЩЕННАЯ ЛОГИКА ОЧИСТКИ И ПАРСИНГА ---
+                let jsonText = geminiData.candidates[0].content.parts[0].text;
+                
+                // Ищем Markdown блок (с `json` или без) и извлекаем его содержимое
+                const markdownMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (markdownMatch && markdownMatch[1]) {
+                    console.log("Markdown block detected, extracting clean JSON.");
+                    jsonText = markdownMatch[1]; // Используем только "чистый" JSON
+                }
+
                 let results;
-                const jsonText = geminiData.candidates[0].content.parts[0].text;
-                 try {
-                     results = JSON.parse(jsonText);
-                 } catch (e) {
-                     console.warn("Failed to parse direct JSON, trying to extract from Markdown block...", e);
-                     const markdownJsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
-                     if (markdownJsonMatch && markdownJsonMatch[1]) {
-                         try {
-                             results = JSON.parse(markdownJsonMatch[1]);
-                             console.log("Successfully parsed JSON from Markdown block.");
-                         } catch (e2) {
-                             console.error("Failed to parse even the extracted Markdown JSON:", e2);
-                             throw new Error("Invalid inner JSON format from Gemini.");
-                         }
-                     } else {
-                          throw new Error("Invalid inner JSON format from Gemini (no Markdown found).");
-                     }
-                 }
+                try {
+                    results = JSON.parse(jsonText); // Пытаемся распарсить "чистую" строку
+                } catch (e) {
+                    console.error("Failed to parse final JSON string:", e);
+                    console.error("String that failed parsing:", jsonText);
+                    throw new Error("Invalid inner JSON format from Gemini after cleaning.");
+                }
                 // --- КОНЕЦ ИЗМЕНЕНИЯ ---
                 
                 console.log("Successfully parsed analysis results:", results);
