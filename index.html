@@ -873,9 +873,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
                         // Убедимся, что probability существует и является числом
                         const probability = typeof event.probability === 'number' ? event.probability : 0;
-
-                        // --- ИЗМЕНЕНИЕ: Исправлена структура HTML для корректного отображения ---
-                        // Блок с процентами вынесен из блока с прогресс-баром и убран лишний разделитель.
+                        
+                        // --- ИЗМЕНЕНИЕ: Восстановлена корректная структура HTML для отображения событий. ---
+                        // Блок с процентами и прибылью теперь является соседним элементом для прогресс-бара, а не дочерним.
+                        // Также убрана лишняя строка-разделитель.
                         return `
                             <div class="event-item">
                                 <span class="event-name">${eventName || 'Событие не определено'}</span>
@@ -898,10 +899,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             resultsContainer.classList.remove('hidden'); // Показываем блок с результатами
         }
 
-		// --- Функция отправки запроса на списание попытки ---
-        async function sendAttemptToServer() {
-            const t = translations[currentLang];
-            if (!userId) {
+        // --- Функция отправки запроса на списание попытки ---
         async function sendAttemptToServer() {
             const t = translations[currentLang];
             if (!userId) {
