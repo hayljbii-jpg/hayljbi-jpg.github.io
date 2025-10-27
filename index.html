@@ -651,6 +651,15 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         // --- Функция для установки языка интерфейса ---
         function setLanguage(lang) {
             const t = translations[lang];
+
+            // --- ДОБАВЛЕНО: Обновление самого переключателя языка ---
+            const langOption = document.querySelector(`.language-option[data-lang="${lang}"]`);
+            if (langOption) {
+                selectedLangFlag.src = langOption.querySelector('.flag-icon').src;
+                selectedLangText.textContent = langOption.querySelector('span').textContent;
+            }
+            // ----------------------------------------------------
+
             document.querySelector('h1').innerHTML = t.title;
             document.querySelector('#gameType option[disabled]').textContent = t.gameType;
             document.getElementById('uploadLabel').innerHTML = t.uploadLabel;
@@ -1143,8 +1152,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
         // --- Функция загрузки начальных данных (попыток) ---
         async function loadInitialAttempts() { // Убрали параметр retry
-             const t = translations[currentLang];
-             attemptsTextElement.textContent = t.attemptsTextLoading; // Показываем "Загрузка..."
+             // --- ИЗМЕНЕНИЕ: Убираем t, так как язык еще не установлен ---
+             // const t = translations[currentLang];
+             attemptsTextElement.textContent = 'Loading attempts...'; // Временный текст на EN
              attemptsTextElement.classList.remove('attempts-error');
              console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId}`);
 
@@ -1163,10 +1173,22 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                       throw new Error(`HTTP error ${response.status}`);
                  }
                  const data = await response.json(); // Попытка распарсить JSON
-                 console.log("Attempts loaded:", data);
+                 console.log("Attempts and lang loaded:", data);
+
                  if (typeof data.attempts_left === 'number') {
                      attemptsLeft = data.attempts_left;
-                     updateAttemptsText(); // Обновляем текст с полученным значением
+
+                    // --- ИЗМЕНЕНИЕ: Устанавливаем язык, полученный с сервера ---
+                    if (data.lang && translations[data.lang]) {
+                        currentLang = data.lang;
+                        console.log("Language set from server:", currentLang);
+                    } else {
+                        console.log("No valid language from server, using default:", currentLang);
+                    }
+                    
+                    setLanguage(currentLang); // Обновляем ВЕСЬ интерфейс, включая язык и попытки
+                    // updateAttemptsText(); // <-- Этот вызов больше не нужен, setLanguage справляется
+                    // ----------------------------------------------------
                  } else {
                       throw new Error("Invalid 'attempts_left' format in response");
                  }
@@ -1175,7 +1197,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
                  // --- ИЗМЕНЕНИЕ: Убрали повтор, сразу показываем ошибку ---
                  attemptsLeft = -1; // Ставим -1, чтобы показать ошибку
-                 attemptsTextElement.textContent = t.attemptsTextError; // Показываем текст ошибки
+
+                 // --- ИЗМЕНЕНИЕ: Устанавливаем язык (дефолтный) ---
+                 // Это обновит все тексты, кроме attemptsText
+                 setLanguage(currentLang); 
+                 // --------------------------------------------------
+
+                 // Теперь вручную устанавливаем текст ошибки на нужном языке
+                 attemptsTextElement.textContent = translations[currentLang].attemptsTextError; 
                  attemptsTextElement.classList.add('attempts-error'); // Добавляем класс ошибки
                  updateAnalyzeButtonState(); // Обновляем состояние кнопки (будет неактивна)
                  // ----------------------------------------------------
@@ -1198,8 +1227,11 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
             console.log("User ID:", userId);
 
-            // Устанавливаем язык по умолчанию
-            setLanguage(currentLang);
+            // --- ИЗМЕНЕНИЕ: Устанавливаем язык по умолчанию ---
+            // setLanguage(currentLang); // <--- УБИРАЕМ ЭТОТ ВЫЗОВ
+            // Он будет вызван внутри loadInitialAttempts()
+            // -------------------------------------------------
+
 
             // Если user_id найден, загружаем попытки
             if (userId) {
@@ -1213,6 +1245,11 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             } else {
                 console.error("User ID not found in URL or initDataUnsafe.");
                 attemptsLeft = -1; // Ставим ошибку
+
+                // --- ИЗМЕНЕНИЕ: Устанавливаем язык (дефолтный) перед показом ошибки ---
+                setLanguage(currentLang); 
+                // -----------------------------------------------------------------
+
                 attemptsTextElement.textContent = translations[currentLang].attemptsTextError;
                 attemptsTextElement.classList.add('attempts-error');
                 updateAnalyzeButtonState(); // Кнопка будет неактивна
