@@ -447,7 +447,7 @@
     <div id="customAlert" class="custom-alert hidden"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
+    <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -465,8 +465,6 @@
         let totalAttempts = 10;
         let isAnalyzing = false;
         let userId = null;
-        // --- НОВАЯ ПЕРЕМЕННАЯ: для хранения имени текущего партнера ---
-        let currentPartner = null;
 
         const translations = {
             'ru': {
@@ -491,7 +489,6 @@
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
-                'alert_model_overloaded': 'Нейросеть перегружена. Пожалуйста, попробуйте через 5 минут.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
                 'system_prompt': `You are BetGPT, an AI Analyst.
 
@@ -554,9 +551,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
-                'alert_model_overloaded': 'The neural network is overloaded. Please try again in 5 minutes.',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
-                'system_prompt': `You are BetGPT, an AI Analyst.
+                 'system_prompt': `You are BetGPT, an AI Analyst.
 
 **Task 1: Validate Image**
 1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
@@ -822,7 +818,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             updateAnalyzeButtonState(); // Обновляем состояние кнопки анализа (станет неактивной)
         }
 
-// --- Обработчик кнопки "Выбрать другое изображение" ---
+        // --- Обработчик кнопки "Выбрать другое изображение" ---
         tryAgainButton.addEventListener('click', resetToInitialState);
 
 
@@ -873,16 +869,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
                         // Убедимся, что probability существует и является числом
                         const probability = typeof event.probability === 'number' ? event.probability : 0;
-                        
-                        // --- ИЗМЕНЕНИЕ: Восстановлена корректная структура HTML для отображения событий. ---
-                        // Блок с процентами и прибылью теперь является соседним элементом для прогресс-бара, а не дочерним.
-                        // Также убрана лишняя строка-разделитель.
+
                         return `
                             <div class="event-item">
                                 <span class="event-name">${eventName || 'Событие не определено'}</span>
                                 <div class="event-progress-container">
                                     <div class="event-progress-bar" style="width: ${probability}%;"></div>
-                                </div>
+                                ----------------------------------------------------
                                 <div class="percentage-profit-container">
                                     <span class="event-percentage">${probability}%</span>
                                     ${profitText}
@@ -907,14 +900,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 showCustomAlert(t.alert_backend_error); // Показываем общую ошибку
                 return false; // Не удалось отправить
             }
-            // --- НОВОЕ: Проверяем, что партнер определен ---
-            if (!currentPartner) {
-                console.error("Partner not found, cannot send attempt usage.");
-                showCustomAlert(t.alert_backend_error);
-                return false;
-            }
-
-             console.log(`Sending /use_attempt for user ${userId}, partner ${currentPartner} to ${BACKEND_URL}`);
+             console.log(`Sending /use_attempt for user ${userId} to ${BACKEND_URL}`);
             try {
                 const response = await fetch(`${BACKEND_URL}/use_attempt`, {
                     method: 'POST',
@@ -924,8 +910,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                         'ngrok-skip-browser-warning': 'true'
                         // ------------------------------------------
                     },
-                    // --- ИЗМЕНЕНИЕ: Добавляем 'partner' в тело запроса ---
-                    body: JSON.stringify({ user_id: userId, partner: currentPartner })
+                    body: JSON.stringify({ user_id: userId })
                 });
 
                 // --- ИЗМЕНЕНИЕ: Обрабатываем ответ сервера ---
@@ -1138,15 +1123,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 }
 
             } catch (error) {
-				 console.error('--- ERROR during API call ---', error);
-                
-                // --- ИЗМЕНЕНИЕ: Добавлена проверка на ошибку "model is overloaded" ---
+                 console.error('--- ERROR during API call ---', error);
+
+                // Возвращать попытку на сервере НЕ НУЖНО,
+                // так как ошибка (например, геолокация) - это тоже результат, на который потрачена попытка.
+                // await returnAttemptToServer();
+
                 if (error.name === 'AbortError') {
                     showCustomAlert(t.alert_timeout);
                 } else if (error?.message?.includes("User location is not supported")) {
                     showCustomAlert(t.alert_location_not_supported);
-                } else if (error?.message?.includes("The model is overloaded")) { // <-- ВОТ НОВАЯ ПРОВЕРКА
-                    showCustomAlert(t.alert_model_overloaded); // Показываем новое сообщение
                 } else {
                     showCustomAlert(t.alert_api_error); // Общая ошибка API
                 }
@@ -1154,6 +1140,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  // Сброс интерфейса после ошибки
                  isAnalyzing = false;
                  analyzeButton.innerHTML = t.analyzeButton;
+                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
                  tryAgainButton.disabled = false;
                  gameTypeSelect.disabled = false;
                  analyzeButton.style.marginBottom = '';
@@ -1197,16 +1184,15 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         // ---------------------------------------------
 
 
-// --- Функция загрузки начальных данных (попыток) ---
+        // --- Функция загрузки начальных данных (попыток) ---
         async function loadInitialAttempts() { // Убрали параметр retry
              // --- ИЗМЕНЕНИЕ: Текст загрузки ставится ДО получения языка ---
              attemptsTextElement.textContent = translations[currentLang].attemptsTextLoading; // Показываем "Загрузка..."
              attemptsTextElement.classList.remove('attempts-error');
-             // --- ИЗМЕНЕНИЕ: Добавляем partner в URL запроса ---
-             console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId}, partner ${currentPartner}`);
+             console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId}`);
 
              try {
-                 const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}&partner=${currentPartner}`, {
+                 const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
                      method: 'GET',
                      cache: 'no-cache', // Добавим, чтобы избежать кэширования
                      // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
@@ -1260,10 +1246,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
 
-            // --- ИЗМЕНЕНИЕ: Получаем user_id и partner из параметров URL ---
+            // Пытаемся получить user_id из параметров URL
             const urlParams = new URLSearchParams(window.location.search);
-            userId = urlParams.get('user_id');
-            currentPartner = urlParams.get('partner'); // Получаем имя партнера
+            userId = urlParams.get('user_id'); // Ищем user_id=...
 
              // Если не нашли user_id=, пытаемся получить из tg.initDataUnsafe (менее надежно)
             if (!userId && tg.initDataUnsafe && tg.initDataUnsafe.user) {
@@ -1271,13 +1256,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             }
 
             console.log("User ID:", userId);
-            console.log("Partner:", currentPartner); // Логируем партнера
 
             // --- ИЗМЕНЕНИЕ: Убрали setLanguage(currentLang) отсюда ---
             // Язык будет установлен ПОСЛЕ ответа от сервера в loadInitialAttempts()
 
-            // Если user_id и partner найдены, загружаем попытки
-            if (userId && currentPartner) {
+            // Если user_id найден, загружаем попытки
+            if (userId) {
                 // --- ИЗМЕНЕНИЕ: Сначала делаем "прогрев", потом загружаем попытки ---
                 pingBackend(); // Запускаем "прогрев" (не ждем завершения)
                 // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
@@ -1286,7 +1270,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 }, 150); // Увеличили немного паузу до 150 миллисекунд
                 // -------------------------------------------------------------
             } else {
-                console.error("User ID or Partner not found in URL or initDataUnsafe.");
+                console.error("User ID not found in URL or initDataUnsafe.");
                 attemptsLeft = -1; // Ставим ошибку
                 
                 // --- ИЗМЕНЕНИЕ: Устанавливаем язык (дефолтный) ---
