@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ставки от AI</title>
+    <!-- ИЗМЕНЕНИЕ (п.3): Добавлена пустая иконка, чтобы убрать ошибку 404 в логах -->
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -192,17 +194,26 @@
             margin-top: 0;
             margin-bottom: 20px; /* Отступ снизу */
         }
-        /* --- ИЗМЕНЕНИЕ: Стиль для ошибки загрузки попыток --- */
         .attempts-error {
             background-color: #e53935; /* Красный */
             color: white;
             font-weight: 500;
         }
-        /* --------------------------------------------------- */
         .footer-text {
             font-size: 12px;
             color: #888;
             padding-top: 20px;
+            margin-bottom: 5px; /* Уменьшен отступ снизу */
+        }
+        /* ИЗМЕНЕНИЕ (п.5): Стили для ссылки в футере */
+        .footer-link {
+            font-size: 12px;
+            color: #a0b0c8;
+            margin-top: 0;
+        }
+        .footer-link a {
+            color: #a0b0c8;
+            text-decoration: underline;
         }
         .hidden {
             display: none !important;
@@ -334,7 +345,7 @@
         }
         .analytics-title {
             font-size: 12px;
-            color: #8a96a8;
+            color: #a96a8;
             margin-bottom: 8px;
         }
         .analytics-text {
@@ -366,10 +377,118 @@
             top: 0;
             pointer-events: none;
         }
+        
+        /* ИЗМЕНЕНИЕ (п.4): Стили для модального окна соглашения */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(28, 39, 56, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: #2a3649;
+            border-radius: 16px;
+            padding: 25px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            text-align: left;
+        }
+        .modal-content h2 {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-content p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #a0b0c8;
+            margin-bottom: 20px;
+        }
+        .modal-content p a {
+            color: #00e676;
+            text-decoration: none;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .checkbox-container input {
+            display: none;
+        }
+        .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            background: #1c2738;
+            border: 1px solid #4a586e;
+            border-radius: 6px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .custom-checkbox svg {
+            display: none;
+            width: 14px;
+            height: 14px;
+            stroke: #1c2738;
+            stroke-width: 3;
+        }
+        .checkbox-container input:checked + .custom-checkbox {
+            background: #00e676;
+            border-color: #00e676;
+        }
+        .checkbox-container input:checked + .custom-checkbox svg {
+            display: block;
+        }
+        .checkbox-container label {
+            font-size: 14px;
+            color: #fff;
+            flex: 1;
+            cursor: pointer;
+        }
 
     </style>
 </head>
 <body>
+    <!-- ИЗМЕНЕНИЕ (п.4): HTML для модального окна -->
+    <div id="agreementModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="agreementTitle">Пользовательское соглашение</h2>
+            <p id="agreementText">
+                Перед использованием бота вы должны прочесть и принять 
+                <a href="https://telegra.ph/Polzovatelskoe-soglashenie-OddsAIBot-10-28" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>.
+            </p>
+            <div class="checkbox-container">
+                <input type="checkbox" id="agreementCheckbox">
+                <span class="custom-checkbox">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </span>
+                <label for="agreementCheckbox" id="agreementCheckboxLabel">Я согласен с пользовательскими соглашениями</label>
+            </div>
+            <button id="agreementButton" class="button primary-button" disabled>Продолжить</button>
+        </div>
+    </div>
+
     <div class="header">
         <h1>💡 Ставки от AI</h1>
         <div class="language-select">
@@ -442,7 +561,14 @@
         <p id="attemptsText" class="attempts-text">Загрузка попыток...</p>
     </div>
 
-    <p class="footer-text">Создано нейросетью BetGPT - © 2025</p>
+    <!-- ИЗМЕНЕНИЕ (п.5): Обновлен текст футера и добавлена ссылка -->
+    <p class="footer-text">Создано нейросетью OddsAIBot - © 2026</p>
+    <p class="footer-link">
+        <a href="https://telegra.ph/Polzovatelskoe-soglashenie-OddsAIBot-10-28" target="_blank" rel="noopener noreferrer" id="footerAgreementLink">
+            Пользовательское соглашение
+        </a>
+    </p>
+    <!-- --------------------------------------------------- -->
 
     <div id="customAlert" class="custom-alert hidden"></div>
 
@@ -451,21 +577,17 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // --- ИЗМЕНЕНИЕ: Установлен новый субдомен ---
         const BACKEND_URL = 'https://wergune.duckdns.org';
-        // ------------------------------------------
-
-        // --- ИЗМЕНЕНИЕ: Ключ API удален с клиента (будет использоваться на сервере) ---
-        // const GEMINI_API_KEY = "ВАШ_GEMINI_API_КЛЮЧ";
-        // ------------------------------------------------------------------------
         const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен.";
+        // ИЗМЕНЕНИЕ (п.4): URL для соглашения
+        const AGREEMENT_URL = "https://telegra.ph/Polzovatelskoe-soglashenie-OddsAIBot-10-28";
 
-        let currentLang = 'ru'; // Язык по умолчанию, будет перезаписан сервером
-        let attemptsLeft = -1; // -1 означает, что попытки еще не загружены
+        let currentLang = 'ru'; 
+        let attemptsLeft = -1; 
         let totalAttempts = 10;
         let isAnalyzing = false;
         let userId = null;
-        let currentPartner = '1win'; // <-- ДОБАВЛЕНО: Партнер по умолчанию (1win)
+        let currentPartner = '1win'; 
 
         const translations = {
             'ru': {
@@ -479,19 +601,27 @@
                 'attemptsTextLoading': 'Загрузка попыток...',
                 'attemptsTextError': 'Ошибка загрузки попыток',
                 'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
-                'footerText': 'Создано нейросетью BetGPT - © 2025',
+                // ИЗМЕНЕНИЕ (п.5): Обновлен текст футера
+                'footerText': 'Создано нейросетью OddsAIBot - © 2026',
+                // ИЗМЕНЕНИЕ (п.5): Добавлен текст для ссылки
+                'footerLinkText': 'Пользовательское соглашение',
                 'profit_header': 'При вложенных 100$ вы заработаете:',
                 'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
                 'alert_select_game_type': 'Пожалуйста, сначала выберите тип игры.',
                 'alert_no_attempts': 'У вас закончились попытки на сегодня.',
                 'alert_api_key_missing': 'API ключ для Gemini не указан. Анализ невозможен.',
                 'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
-                // --- ДОБАВЛЕНО: Новый ключ перевода для перегрузки ---
                 'alert_model_overloaded': 'Нейросеть перегружена. Пожалуйста, попробуйте через 5 минут.',
                 'alert_backend_error': 'Ошибка связи с сервером. Попытка не была списана.',
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
+                // ИЗМЕНЕНИЕ (п.4): Переводы для модального окна
+                'alert_agreement_required': 'Пожалуйста, примите пользовательское соглашение.',
+                'agreement_modal_title': 'Пользовательское соглашение',
+                'agreement_modal_text': 'Перед использованием бота вы должны прочесть и принять <a href="{url}" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>.',
+                'agreement_modal_checkbox': 'Я согласен с пользовательскими соглашениями',
+                'agreement_modal_button': 'Продолжить',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
                 'system_prompt': `You are BetGPT, an AI Analyst.
 
@@ -543,19 +673,25 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'attemptsTextLoading': 'Loading attempts...',
                 'attemptsTextError': 'Failed to load attempts',
                 'attemptsText': 'Attempts left today: {left} of {total}',
-                'footerText': 'Created by BetGPT neural network - © 2025',
+                'footerText': 'Created by OddsAIBot neural network - © 2026',
+                'footerLinkText': 'User Agreement',
                 'profit_header': 'With a $100 bet, you will earn:',
                 'alert_select_image': 'Please upload an event image first.',
                 'alert_select_game_type': 'Please select a game type first.',
                 'alert_no_attempts': 'You have no attempts left for today.',
                 'alert_api_key_missing': 'Gemini API key is not provided. Analysis is not possible.',
                 'alert_api_error': 'Error during analysis. Please check the console or try again later.',
-                // --- ДОБАВЛЕНО: Новый ключ перевода для перегрузки ---
                 'alert_model_overloaded': 'The neural network is overloaded. Please try again in 5 minutes.',
                 'alert_backend_error': 'Server communication error. Attempt was not used.',
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
+                // ИЗМЕНЕНИЕ (п.4): Переводы для модального окна
+                'alert_agreement_required': 'Please accept the User Agreement.',
+                'agreement_modal_title': 'User Agreement',
+                'agreement_modal_text': 'Before using the bot, you must read and accept the <a href="{url}" target="_blank" rel="noopener noreferrer">User Agreement</a>.',
+                'agreement_modal_checkbox': 'I agree to the User Agreement',
+                'agreement_modal_button': 'Continue',
                 'analyze_prompt': 'Analyze this bet on {gameType}.',
                  'system_prompt': `You are BetGPT, an AI Analyst.
 
@@ -617,6 +753,11 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         const analysisStatusText = document.getElementById('analysisStatusText');
         const resultsContainer = document.getElementById('resultsContainer');
         let analysisInterval;
+        
+        // ИЗМЕНЕНИЕ (п.4): Элементы модального окна
+        const agreementModal = document.getElementById('agreementModal');
+        const agreementCheckbox = document.getElementById('agreementCheckbox');
+        const agreementButton = document.getElementById('agreementButton');
 
         // --- Функция для показа кастомного алерта ---
         function showCustomAlert(message) {
@@ -641,7 +782,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             const t = translations[currentLang];
             if (attemptsLeft === -1) {
                 // Попытки еще не загружены или ошибка загрузки
-                // attemptsTextElement.textContent = t.attemptsTextLoading; // Можно вернуть, если нужен текст "Загрузка..."
             } else if (attemptsLeft >= 0) {
                 // Попытки успешно загружены
                 attemptsTextElement.classList.remove('attempts-error');
@@ -649,19 +789,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     .replace('{left}', attemptsLeft)
                     .replace('{total}', totalAttempts);
             }
-             // Состояние кнопки анализа зависит от attemptsLeft
             updateAnalyzeButtonState();
         }
 
         // --- Функция для установки языка интерфейса ---
         function setLanguage(lang) {
-            // --- ИЗМЕНЕНИЕ: Обновляем и сам переключатель языка ---
             const option = document.querySelector(`.language-option[data-lang="${lang}"]`);
             if (option) {
                 selectedLangFlag.src = option.querySelector('.flag-icon').src;
                 selectedLangText.textContent = option.querySelector('span').textContent;
             }
-            // ----------------------------------------------------
 
             const t = translations[lang];
             document.querySelector('h1').innerHTML = t.title;
@@ -672,17 +809,23 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             analyzeButton.innerHTML = isAnalyzing ? t.analyzeButtonLoading : t.analyzeButton;
             tryAgainButton.innerHTML = t.tryAgainButton;
 
-            // Обновляем текст попыток с учетом текущего состояния (загрузка/ошибка/значение)
             if (attemptsLeft === -1 && attemptsTextElement.classList.contains('attempts-error')) {
                  attemptsTextElement.textContent = t.attemptsTextError;
             } else if (attemptsLeft === -1) {
                  attemptsTextElement.textContent = t.attemptsTextLoading;
             } else {
-                 updateAttemptsText(); // Обновит текст с {left} и {total}
+                 updateAttemptsText(); 
             }
 
-
+            // ИЗМЕНЕНИЕ (п.5): Обновление текстов футера
             document.querySelector('.footer-text').textContent = t.footerText;
+            document.getElementById('footerAgreementLink').textContent = t.footerLinkText;
+
+            // ИЗМЕНЕНИЕ (п.4): Обновление текстов модального окна
+            document.getElementById('agreementTitle').textContent = t.agreement_modal_title;
+            document.getElementById('agreementText').innerHTML = t.agreement_modal_text.replace('{url}', AGREEMENT_URL);
+            document.getElementById('agreementCheckboxLabel').textContent = t.agreement_modal_checkbox;
+            document.getElementById('agreementButton').textContent = t.agreement_modal_button;
 
             const gameOptions = gameTypeSelect.querySelectorAll('option:not([disabled])');
             gameOptions.forEach(option => {
@@ -692,7 +835,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 }
             });
 
-             // Обновляем заголовки в уже отображенных результатах, если они есть
             if (!resultsContainer.classList.contains('hidden')) {
                 const confidenceTitle = resultsContainer.querySelector('.info-block:nth-child(1) .card-title');
                 const signalTitle = resultsContainer.querySelector('.info-block:nth-child(2) .card-title');
@@ -708,7 +850,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             }
         }
 
-        // --- ИЗМЕНЕНИЕ: Функция для отправки языка на сервер ---
+        // --- Функция для отправки языка на сервер ---
         async function setLanguageOnServer(lang) {
             if (!userId) {
                 console.log("Cannot set lang on server: userId is missing.");
@@ -734,7 +876,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 console.error("Error sending set_lang request:", error);
             }
         }
-        // ---------------------------------------------------
 
 
         // --- Обработчики смены языка ---
@@ -745,18 +886,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         languageOptions.forEach(option => {
             option.addEventListener('click', () => {
                 const newLang = option.dataset.lang;
-                currentLang = newLang; // Обновляем глобальную переменную
-
-                // --- ИЗМЕНЕНИЕ: Обновляем интерфейс и отправляем на сервер ---
-                setLanguage(newLang); // Немедленно обновляем интерфейс Mini App
-                setLanguageOnServer(newLang); // Отправляем выбор на бэкенд
-                // -------------------------------------------------------
-
+                currentLang = newLang; 
+                setLanguage(newLang); 
+                setLanguageOnServer(newLang); 
                 languageOptionsContainer.classList.remove('show');
             });
         });
 
-        // Скрывать опции языка при клике вне элемента
         window.addEventListener('click', (e) => {
             if (!document.querySelector('.language-select').contains(e.target)) {
                 languageOptionsContainer.classList.remove('show');
@@ -765,21 +901,20 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
         // --- Функция показа изображения ---
         function showImage(file) {
-            resultsContainer.classList.add('hidden'); // Скрываем предыдущие результаты
-            analysisContainer.classList.add('hidden'); // Скрываем прогресс-бар анализа
-            analyzeButton.classList.remove('hidden'); // Показываем кнопку анализа
+            resultsContainer.classList.add('hidden'); 
+            analysisContainer.classList.add('hidden'); 
+            analyzeButton.classList.remove('hidden'); 
             analyzeButton.innerHTML = translations[currentLang].analyzeButton;
             isAnalyzing = false;
-
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
-                imagePreviewContainer.classList.remove('hidden'); // Показываем превью
-                uploadContainer.classList.add('hidden'); // Скрываем блок загрузки
+                imagePreviewContainer.classList.remove('hidden'); 
+                uploadContainer.classList.add('hidden'); 
 
-                updateAnalyzeButtonState(); // Обновляем состояние кнопки (активна/неактивна)
-                tryAgainButton.classList.remove('hidden'); // Показываем кнопку "Выбрать другое"
+                updateAnalyzeButtonState(); 
+                tryAgainButton.classList.remove('hidden'); 
             };
             reader.readAsDataURL(file);
         }
@@ -803,24 +938,24 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
         // --- Функция сброса состояния ---
         function resetToInitialState() {
-            imageUpload.value = ''; // Сбрасываем input file
+            imageUpload.value = ''; 
             isAnalyzing = false;
 
-            imagePreviewContainer.classList.add('hidden'); // Скрываем превью
-            resultsContainer.classList.add('hidden'); // Скрываем результаты
-            analysisContainer.classList.add('hidden'); // Скрываем прогресс-бар
-            uploadContainer.classList.remove('hidden'); // Показываем блок загрузки
+            imagePreviewContainer.classList.add('hidden'); 
+            resultsContainer.classList.add('hidden'); 
+            analysisContainer.classList.add('hidden'); 
+            uploadContainer.classList.remove('hidden'); 
 
-            analyzeButton.innerHTML = translations[currentLang].analyzeButton; // Возвращаем текст кнопки
-            analyzeButton.classList.remove('hidden'); // Показываем кнопку
-            analyzeButton.style.marginBottom = ''; // Возвращаем отступ кнопки
+            analyzeButton.innerHTML = translations[currentLang].analyzeButton; 
+            analyzeButton.classList.remove('hidden'); 
+            analyzeButton.style.marginBottom = ''; 
 
-            tryAgainButton.classList.add('hidden'); // Скрываем кнопку "Выбрать другое"
-            tryAgainButton.disabled = false; // Разблокируем ее на всякий случай
-            gameTypeSelect.disabled = false; // Разблокируем выбор типа игры
-            gameTypeSelect.classList.remove('hidden'); // Показываем выбор типа игры
+            tryAgainButton.classList.add('hidden'); 
+            tryAgainButton.disabled = false; 
+            gameTypeSelect.disabled = false; 
+            gameTypeSelect.classList.remove('hidden'); 
 
-            updateAnalyzeButtonState(); // Обновляем состояние кнопки анализа (станет неактивной)
+            updateAnalyzeButtonState(); 
         }
 
         // --- Обработчик кнопки "Выбрать другое изображение" ---
@@ -831,7 +966,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         function displayResults(data) {
             const t = translations[currentLang];
 
-             // Ищем уверенность: сначала в поле confidence, потом максимальную из events
             const confidence = data.confidence || (data.events && data.events.length > 0 ? Math.max(...data.events.map(e => e.probability || 0)) : 'N/A');
 
             resultsContainer.innerHTML = `
@@ -853,26 +987,21 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 <div class="result-card event-list">
                     <div class="card-title">${t.results_events}</div>
                     ${(data.events || []).map(event => {
-                        let eventName = event.name || ''; // Убедимся, что event.name существует
+                        let eventName = event.name || ''; 
                         let profitText = '';
-                        // Ищем коэффициент в скобках (число, возможно с точкой или запятой)
                         const oddsMatch = eventName.match(/\(([\d.,]+)\)/);
 
                         if (oddsMatch && oddsMatch[1]) {
-                            // Заменяем запятую на точку и парсим число
                             const odds = parseFloat(oddsMatch[1].replace(',', '.'));
                             if (!isNaN(odds) && odds > 1) {
                                 const profit = (100 * (odds - 1)).toFixed(2);
                                 profitText = `<span class="profit-value">+${profit}$</span>`;
-                                // Удаляем коэффициент из названия события
                                 eventName = eventName.replace(/\s*\([\d.,]+\)/, '').trim();
                             } else {
-                                 // Если не удалось распарсить коэффициент, просто удаляем скобки
                                  eventName = eventName.replace(/\s*\([\d.,]+\)/, '').trim();
                             }
                         }
 
-                        // Убедимся, что probability существует и является числом
                         const probability = typeof event.probability === 'number' ? event.probability : 0;
 
                         return `
@@ -894,7 +1023,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     <p class="analytics-text">${data.analytics || 'Аналитика недоступна.'}</p>
                 </div>
             `;
-            resultsContainer.classList.remove('hidden'); // Показываем блок с результатами
+            resultsContainer.classList.remove('hidden'); 
         }
 
         // --- Функция отправки запроса на списание попытки ---
@@ -902,45 +1031,38 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             const t = translations[currentLang];
             if (!userId) {
                 console.error("User ID not found, cannot send attempt usage.");
-                showCustomAlert(t.alert_backend_error); // Показываем общую ошибку
-                return false; // Не удалось отправить
+                showCustomAlert(t.alert_backend_error); 
+                return false; 
             }
-             // --- ИЗМЕНЕНИЕ: Добавляем партнера в лог ---
              console.log(`Sending /use_attempt for user ${userId} (partner: ${currentPartner}) to ${BACKEND_URL}`);
             try {
                 const response = await fetch(`${BACKEND_URL}/use_attempt`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
                         'ngrok-skip-browser-warning': 'true'
-                        // ------------------------------------------
                     },
-                    // --- ИЗМЕНЕНИЕ: Добавляем партнера в тело запроса ---
                     body: JSON.stringify({ user_id: userId, partner: currentPartner })
                 });
 
-                // --- ИЗМЕНЕНИЕ: Обрабатываем ответ сервера ---
                 if (!response.ok) {
-                    // Если сервер ответил ошибкой (например, 400 - нет попыток)
-                    const errorData = await response.json().catch(() => ({})); // Пытаемся получить JSON ошибки
+                    const errorData = await response.json().catch(() => ({})); 
                     console.error('Failed to send attempt usage:', response.status, errorData);
-                    showCustomAlert(errorData.error || t.alert_backend_error); // Показываем ошибку от сервера или общую
-                    return false; // Не удалось списать
+                    showCustomAlert(errorData.error || t.alert_backend_error); 
+                    return false; 
                 }
 
-                // Успешно списали
                 const result = await response.json();
                 console.log('Attempt usage sent successfully:', result);
                 if (typeof result.attempts_remaining === 'number') {
-                     attemptsLeft = result.attempts_remaining; // Обновляем локальный счетчик
-                     updateAttemptsText(); // Обновляем отображение
+                     attemptsLeft = result.attempts_remaining; 
+                     updateAttemptsText(); 
                 }
                 return true; // Успешно списали
             } catch (error) {
                 console.error('Network error sending attempt usage:', error);
-                showCustomAlert(t.alert_backend_error); // Показываем общую ошибку
-                return false; // Не удалось отправить/списать
+                showCustomAlert(t.alert_backend_error); 
+                return false; 
             }
         }
 
@@ -951,7 +1073,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             console.log("--- Starting Bet Analysis ---");
 
             if (attemptsLeft === -1) {
-                showCustomAlert(t.attemptsTextError); return; // Показываем ошибку, если попытки не загружены
+                showCustomAlert(t.attemptsTextError); return; 
             }
             if (gameTypeSelect.value === '') {
                 showCustomAlert(t.alert_select_game_type); return;
@@ -959,47 +1081,23 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             if (!imagePreview.src || imagePreviewContainer.classList.contains('hidden')) {
                  showCustomAlert(t.alert_select_image); return;
             }
-             // --- ИЗМЕНЕНИЕ: Убрали проверку API-ключа на клиенте ---
-             // if (!GEMINI_API_KEY || GEMINI_API_KEY === "ВАШ_GEMINI_API_КЛЮЧ") { ... }
-             // ----------------------------------------------------
              if (attemptsLeft <= 0) {
                   showCustomAlert(t.alert_no_attempts); return;
              }
 
-            // --- ИЗМЕНЕНИЕ: Сначала списываем попытку на сервере ---
-            isAnalyzing = true; // Ставим флаг анализа до запроса
+            // --- ИЗМЕНЕНИЕ (п.1): Блокируем интерфейс, но НЕ списываем попытку ---
+            isAnalyzing = true; 
             analyzeButton.innerHTML = t.analyzeButtonLoading;
             analyzeButton.disabled = true;
             tryAgainButton.disabled = true;
-            gameTypeSelect.disabled = true; // Блокируем интерфейс перед запросом
+            gameTypeSelect.disabled = true; 
             analyzeButton.style.marginBottom = '5px';
-            analysisContainer.classList.remove('hidden'); // Показываем прогресс анализа ДО запроса списания
+            analysisContainer.classList.remove('hidden'); 
+            // ----------------------------------------------------------------
 
-            // --- ИЗМЕНЕНИЕ: Вызываем sendAttemptToServer (уже включает partner) ---
-            const attemptSent = await sendAttemptToServer();
-
-            if (!attemptSent) {
-                // Если списать попытку не удалось, останавливаем анализ и разблокируем интерфейс
-                console.log("Attempt usage failed, cancelling analysis.");
-                // Сбрасываем флаги и кнопки, но НЕ сбрасываем картинку
-                 isAnalyzing = false;
-                 analyzeButton.innerHTML = t.analyzeButton;
-                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
-                 tryAgainButton.disabled = false;
-                 gameTypeSelect.disabled = false;
-                 analyzeButton.style.marginBottom = '';
-                 analysisContainer.classList.add('hidden');
-                 updateAnalyzeButtonState(); // Перепроверит состояние кнопки
-                 // Ошибку покажет сама функция sendAttemptToServer()
-                return;
-            }
-            // Если попытка успешно списана, продолжаем анализ Gemini
-
-            // --- Дальнейший код анализа Gemini ---
             let step = 0;
             const steps = t.analysis_steps;
             analysisStatusText.textContent = steps[step];
-            // Убираем старый интервал, если он был
             if (analysisInterval) clearInterval(analysisInterval);
             analysisInterval = setInterval(() => {
                 step = (step + 1) % steps.length;
@@ -1007,14 +1105,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             }, 2000);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+            const timeoutId = setTimeout(() => controller.abort(), 30000); 
 
             try {
                 const imageBase64_full = imagePreview.src;
                 const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
 
-                const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue); // Всегда EN для промпта
-                // Язык для системного промпта берем текущий (чтобы ответ был на нужном языке)
+                const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue); 
                 const systemPromptText = translations[currentLang].system_prompt;
 
 
@@ -1038,81 +1135,88 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                             },
                             "analytics": { "type": "STRING" }, "error": { "type": "STRING" }
                           },
-                          required: ["analytics"] // analytics - обязательное поле в ответе
+                          required: ["analytics"] 
                       }
                   }
                 };
 
                 console.log("Sending request to Backend proxy (/analyze_gemini)...");
-                // --- ИЗМЕНЕНИЕ: Отправляем запрос на наш бэкенд, а не в Google ---
                 const apiUrl = `${BACKEND_URL}/analyze_gemini`;
-                // -----------------------------------------------------------------
-
+                
+                // --- ИЗМЕНЕНИЕ (п.1): Шаг 1 - Вызов API Gemini (без списания) ---
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true' // Добавляем заголовок
+                        'ngrok-skip-browser-warning': 'true' 
                     },
                     body: JSON.stringify(requestBody),
                     signal: controller.signal
                 });
 
-                clearTimeout(timeoutId); // Отменяем таймаут, если ответ пришел
+                clearTimeout(timeoutId); 
 
-                const responseText = await response.text(); // Читаем ответ как текст
-                console.log("Raw Backend response:", responseText); // Логируем сырой ответ
+                const responseText = await response.text(); 
+                console.log("Raw Backend response:", responseText); 
 
+                // --- ИЗМЕНЕНИЕ (п.1): Проверка на ошибки ДО списания ---
                 if (!response.ok) {
                     let errorData = { error: { message: `Backend Proxy Error: ${response.status}` } };
                     try {
                         errorData = JSON.parse(responseText);
-                        // Ищем сообщение об ошибке местоположения (которое пришло от Gemini через наш бэкенд)
                          if (errorData?.error?.message?.includes("User location is not supported")) {
-                             throw new Error("User location is not supported"); // Перебрасываем специфическую ошибку
+                             throw new Error("User location is not supported"); 
                          }
-                         // --- ИЗМЕНЕНИЕ: Ищем ошибку перегрузки ---
                          if (errorData?.error?.message?.toLowerCase().includes("overloaded")) {
-                             throw new Error("Model is overloaded"); // Перебрасываем специфическую ошибку
+                             throw new Error("Model is overloaded"); // <--- Ключевая ошибка
                          }
                     } catch (e) {
-                         // Если это наша кастомная ошибка (location/overloaded), пробрасываем ее
                          if (e.message.includes("User location") || e.message.includes("overloaded")) throw e;
-                         /* Ошибка парсинга JSON - используем errorData по умолчанию */
                     }
                     throw new Error(errorData.error ? errorData.error.message : 'Backend network response was not ok');
                 }
 
                 let data;
                  try {
-                     data = JSON.parse(responseText); // Парсим JSON ответа бэкенда
+                     data = JSON.parse(responseText); 
                  } catch (e) {
                      console.error("Failed to parse Backend JSON response:", e);
                      throw new Error("Invalid JSON response from Backend.");
                  }
 
-
                 if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    // Если структура ответа не та, что ожидаем (например, пришла ошибка от Gemini)
                     if (data?.error?.message?.includes("User location is not supported")) {
                          throw new Error("User location is not supported");
                     }
-                    // --- ИЗМЕНЕНИЕ: Ищем ошибку перегрузки ---
                     if (data?.error?.message?.toLowerCase().includes("overloaded")) {
-                         throw new Error("Model is overloaded");
+                         throw new Error("Model is overloaded"); // <--- Ключевая ошибка
                     }
                     console.error("Invalid API response structure from Backend:", data);
                     throw new Error(data?.error?.message || "Invalid API response structure.");
                 }
+                
+                // --- Если мы здесь, Gemini ответил успешно и БЕЗ ошибки "overloaded" ---
 
-                // Извлекаем текст JSON из ответа Gemini и парсим его
+                // --- ИЗМЕНЕНИЕ (п.1): Шаг 2 - Списываем попытку ---
+                const attemptSent = await sendAttemptToServer();
+                
+                if (!attemptSent) {
+                    // Если списать попытку НЕ удалось (ошибка бэкенда),
+                    // не показываем результат и сбрасываем.
+                    console.log("Attempt usage failed, cancelling analysis.");
+                    // Ошибку покажет сама sendAttemptToServer()
+                    throw new Error("Backend attempt error"); // Переходим в catch
+                }
+                
+                // --- Если мы здесь, попытка успешно списана ---
+                
+                // --- ИЗМЕНЕНИЕ (п.1): Шаг 3 - Показываем результат ---
                 let results;
                 const jsonText = data.candidates[0].content.parts[0].text;
                  try {
                      results = JSON.parse(jsonText);
                  } catch (e) {
                      console.error("Failed to parse inner JSON from Gemini:", e, "JSON Text:", jsonText);
-                     // Пытаемся извлечь markdown JSON, если он там есть
                       const markdownJsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
                       if (markdownJsonMatch && markdownJsonMatch[1]) {
                           try {
@@ -1127,54 +1231,56 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                       }
                  }
 
-
                 console.log("Successfully parsed analysis results:", results);
 
                 if (results.error === "no_odds_detected") {
                     showCustomAlert(t.alert_no_odds_detected);
-                    resetToInitialState(); // Возвращаем к началу, но попытка уже списана
+                    resetToInitialState(); // Возвращаем к началу
                 } else {
                     displayResults(results); // Показываем результаты
-                     // Интерфейс после успешного анализа
-                    analyzeButton.classList.add('hidden'); // Скрываем кнопку анализа
-                    analysisContainer.classList.add('hidden'); // Скрываем прогресс
-                    tryAgainButton.disabled = false; // Разблокируем "Выбрать другое"
-                    gameTypeSelect.disabled = false; // Разблокируем тип игры
+                    
+                    // --- ИЗМЕНЕНИЕ (п.2): Скрываем превью изображения ---
+                    imagePreviewContainer.classList.add('hidden');
+                    // -------------------------------------------
+                    
+                    analyzeButton.classList.add('hidden'); 
+                    analysisContainer.classList.add('hidden'); 
+                    tryAgainButton.disabled = false; 
+                    gameTypeSelect.disabled = false; 
                 }
 
             } catch (error) {
                  console.error('--- ERROR during API call ---', error);
 
-                // Возвращать попытку на сервере НЕ НУЖНО,
-                // так как ошибка (например, геолокация) - это тоже результат, на который потрачена попытка.
-                // await returnAttemptToServer();
-
-                // --- ИЗМЕНЕНИЕ: Обновлен блок обработки ошибок ---
+                // --- ИЗМЕНЕНИЕ (п.1): Логика обработки ошибок ---
                 if (error.name === 'AbortError') {
                     showCustomAlert(t.alert_timeout);
                 } else if (error?.message?.includes("User location is not supported")) {
                     showCustomAlert(t.alert_location_not_supported);
-                } else if (error?.message?.toLowerCase().includes("overloaded")) { // <-- НОВАЯ ПРОВЕРКА
-                    showCustomAlert(t.alert_model_overloaded); // <-- ИСПОЛЬЗУЕМ НОВЫЙ ПЕРЕВОД
+                } else if (error?.message?.toLowerCase().includes("overloaded")) { 
+                    // Если ошибка "overloaded", попытка НЕ БЫЛА списана.
+                    showCustomAlert(t.alert_model_overloaded); 
+                } else if (error?.message?.includes("Backend attempt error")) {
+                    // Ошибку показала sendAttemptToServer(), просто сбрасываем UI
                 } else {
-                    showCustomAlert(t.alert_api_error); // Общая ошибка API
+                    // Все остальные ошибки (ошибка API, парсинга JSON и т.д.)
+                    // Попытка также НЕ БЫЛА списана.
+                    showCustomAlert(t.alert_api_error); 
                 }
                 // ---------------------------------------------
 
                  // Сброс интерфейса после ошибки
                  isAnalyzing = false;
                  analyzeButton.innerHTML = t.analyzeButton;
-                 // analyzeButton.disabled = false; // Кнопка останется disabled из-за updateAnalyzeButtonState
                  tryAgainButton.disabled = false;
                  gameTypeSelect.disabled = false;
                  analyzeButton.style.marginBottom = '';
                  analysisContainer.classList.add('hidden');
-                 updateAnalyzeButtonState();
+                 updateAnalyzeButtonState(); // Обновит состояние кнопки (будет активна, если попытки > 0)
 
             } finally {
-                clearTimeout(timeoutId); // Очищаем таймаут
-                clearInterval(analysisInterval); // Очищаем интервал статуса
-                // isAnalyzing = false; // Уже сброшено в блоках try/catch
+                clearTimeout(timeoutId); 
+                clearInterval(analysisInterval); 
                 console.log("--- Analysis process finished ---");
             }
         }
@@ -1184,59 +1290,54 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
         // --- Функция "прогрева" бэкенда ---
         async function pingBackend() {
-            if (!userId) return; // Не делаем пинг, если нет user_id
+            if (!userId) return; 
             console.log("Pinging backend to potentially bypass ngrok warning...");
             try {
-                // Делаем GET запрос, но не ждем и не обрабатываем ответ
-                fetch(`${BACKEND_URL}/`, { // --- ИЗМЕНЕНИЕ: Пингуем корневой URL ---
+                fetch(`${BACKEND_URL}/`, { 
                      method: 'GET',
                      cache: 'no-cache',
-                     // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
                      headers: {
                         'ngrok-skip-browser-warning': 'true'
                      }
-                     // ------------------------------------------
                  }).catch(err => {
-                     // Игнорируем любые ошибки, включая ошибки парсинга HTML
                      console.log("Ping request finished (errors ignored).");
                  });
             } catch (error) {
-                 // Также игнорируем ошибки
                  console.log("Ping request failed (error ignored).");
             }
         }
-        // ---------------------------------------------
-
+        
+        // --- Функция для запуска загрузки данных ---
+        function startAppLoad() {
+             pingBackend(); 
+             setTimeout(() => {
+                 loadInitialAttempts(); 
+             }, 150); 
+        }
 
         // --- Функция загрузки начальных данных (попыток) ---
-        async function loadInitialAttempts() { // Убрали параметр retry
-             // --- ИЗМЕНЕНИЕ: Текст загрузки ставится ДО получения языка ---
-             attemptsTextElement.textContent = translations[currentLang].attemptsTextLoading; // Показываем "Загрузка..."
+        async function loadInitialAttempts() { 
+             attemptsTextElement.textContent = translations[currentLang].attemptsTextLoading; 
              attemptsTextElement.classList.remove('attempts-error');
-             // --- ИЗМЕНЕНИЕ: Добавляем партнера в лог ---
              console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId} (partner: ${currentPartner})`);
 
              try {
-                 // --- ИЗМЕНЕНИЕ: Добавляем partner в URL запроса ---
                  const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}&partner=${currentPartner}`, {
                      method: 'GET',
-                     cache: 'no-cache', // Добавим, чтобы избежать кэширования
-                     // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
+                     cache: 'no-cache', 
                      headers: {
                         'ngrok-skip-browser-warning': 'true'
                      }
-                     // ------------------------------------------
                  });
                  if (!response.ok) {
                       console.error(`Failed to load attempts: ${response.status}`);
                       throw new Error(`HTTP error ${response.status}`);
                  }
-                 const data = await response.json(); // Попытка распарсить JSON
+                 const data = await response.json(); 
                  console.log("Attempts and lang loaded:", data);
                  if (typeof data.attempts_left === 'number') {
                      attemptsLeft = data.attempts_left;
                      
-                     // --- ИЗМЕНЕНИЕ: Устанавливаем язык, полученный с сервера ---
                      if (data.lang && translations[data.lang]) {
                          currentLang = data.lang;
                          console.log("Language set from server:", currentLang);
@@ -1245,25 +1346,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                      }
                      
                      setLanguage(currentLang); // Обновляем ВЕСЬ интерфейс, включая язык и попытки
-                     // updateAttemptsText(); // <-- Этот вызов больше не нужен, он внутри setLanguage
                  } else {
                       throw new Error("Invalid 'attempts_left' format in response");
                  }
              } catch (error) {
                  console.error('Failed to load initial attempts:', error);
-
-                 // --- ИЗМЕНЕНИЕ: Убрали повтор, сразу показываем ошибку ---
-                 attemptsLeft = -1; // Ставим -1, чтобы показать ошибку
-                 
-                 // --- ИЗМЕНЕНИЕ: Устанавливаем язык (дефолтный) ---
-                 // Это обновит все тексты, кроме attemptsText
+                 attemptsLeft = -1; 
                  setLanguage(currentLang); 
-                 
-                 // Теперь вручную устанавливаем текст ошибки на нужном языке
-                 attemptsTextElement.textContent = translations[currentLang].attemptsTextError; // Показываем текст ошибки
-                 attemptsTextElement.classList.add('attempts-error'); // Добавляем класс ошибки
-                 updateAnalyzeButtonState(); // Обновляем состояние кнопки (будет неактивна)
-                 // ----------------------------------------------------
+                 attemptsTextElement.textContent = translations[currentLang].attemptsTextError; 
+                 attemptsTextElement.classList.add('attempts-error'); 
+                 updateAnalyzeButtonState(); 
              }
          }
 
@@ -1272,49 +1364,63 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
 
-            // Пытаемся получить user_id из параметров URL
             const urlParams = new URLSearchParams(window.location.search);
-            userId = urlParams.get('user_id'); // Ищем user_id=...
+            userId = urlParams.get('user_id'); 
 
-             // Если не нашли user_id=, пытаемся получить из tg.initDataUnsafe (менее надежно)
             if (!userId && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                  userId = tg.initDataUnsafe.user.id?.toString();
             }
 
-            // --- ДОБАВЛЕНО: Считываем партнера из URL ---
             const partnerFromUrl = urlParams.get('partner');
             if (partnerFromUrl === 'mostbet' || partnerFromUrl === '1win') {
-                currentPartner = partnerFromUrl; // Устанавливаем партнера (mostbet или 1win)
+                currentPartner = partnerFromUrl; 
             }
-            // -----------------------------------------
             
-            console.log("User ID:", userId, "Partner:", currentPartner); // Обновляем лог
+            console.log("User ID:", userId, "Partner:", currentPartner); 
 
-            // --- ИЗМЕНЕНИЕ: Убрали setLanguage(currentLang) отсюда ---
-            // Язык будет установлен ПОСЛЕ ответа от сервера в loadInitialAttempts()
+            // Сначала устанавливаем язык по умолчанию, чтобы модальное окно имело текст
+            setLanguage(currentLang);
 
-            // Если user_id найден, загружаем попытки
+            // --- ИЗМЕНЕНИЕ (п.4): Логика проверки соглашения ---
             if (userId) {
-                // --- ИЗМЕНЕНИЕ: Сначала делаем "прогрев", потом загружаем попытки ---
-                pingBackend(); // Запускаем "прогрев" (не ждем завершения)
-                // Небольшая пауза перед основным запросом, чтобы дать "прогреву" время сработать
-                setTimeout(() => {
-                    loadInitialAttempts(); // Запускаем основную загрузку попыток (которая установит и язык)
-                }, 150); // Увеличили немного паузу до 150 миллисекунд
-                // -------------------------------------------------------------
-            } else {
-                console.error("User ID not found in URL or initDataUnsafe.");
-                attemptsLeft = -1; // Ставим ошибку
+                const agreementKey = `agreement_accepted_${currentPartner}`;
+                const isAgreementAccepted = localStorage.getItem(agreementKey);
                 
-                // --- ИЗМЕНЕНИЕ: Устанавливаем язык (дефолтный) ---
+                if (isAgreementAccepted === 'true') {
+                    // Если уже принято - запускаем приложение
+                    startAppLoad();
+                } else {
+                    // Если не принято - показываем модальное окно
+                    agreementModal.classList.add('show');
+                }
+            } else {
+                 console.error("User ID not found in URL or initDataUnsafe.");
+                 attemptsLeft = -1; 
                  setLanguage(currentLang);
-                 
-                attemptsTextElement.textContent = translations[currentLang].attemptsTextError;
-                attemptsTextElement.classList.add('attempts-error');
-                updateAnalyzeButtonState(); // Кнопка будет неактивна
+                 attemptsTextElement.textContent = translations[currentLang].attemptsTextError;
+                 attemptsTextElement.classList.add('attempts-error');
+                 updateAnalyzeButtonState(); 
             }
+            
+            // --- ИЗМЕНЕНИЕ (п.4): Обработчики модального окна ---
+            agreementCheckbox.addEventListener('change', () => {
+                agreementButton.disabled = !agreementCheckbox.checked;
+            });
+            
+            agreementButton.addEventListener('click', () => {
+                if (agreementCheckbox.checked) {
+                    const agreementKey = `agreement_accepted_${currentPartner}`;
+                    localStorage.setItem(agreementKey, 'true');
+                    agreementModal.classList.remove('show');
+                    startAppLoad(); // Запускаем приложение после принятия
+                } else {
+                    showCustomAlert(translations[currentLang].alert_agreement_required);
+                }
+            });
+            
         });
 
     </script>
 </body>
 </html>
+
