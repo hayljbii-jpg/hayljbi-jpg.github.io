@@ -465,6 +465,7 @@
         let totalAttempts = 10;
         let isAnalyzing = false;
         let userId = null;
+        let currentPartner = '1win'; // <-- ДОБАВЛЕНО: Партнер по умолчанию (1win)
 
         const translations = {
             'ru': {
@@ -485,6 +486,8 @@
                 'alert_no_attempts': 'У вас закончились попытки на сегодня.',
                 'alert_api_key_missing': 'API ключ для Gemini не указан. Анализ невозможен.',
                 'alert_api_error': 'Ошибка при анализе. Пожалуйста, проверьте консоль или попробуйте позже.',
+                // --- ДОБАВЛЕНО: Новый ключ перевода для перегрузки ---
+                'alert_model_overloaded': 'Нейросеть перегружена. Пожалуйста, попробуйте через 5 минут.',
                 'alert_backend_error': 'Ошибка связи с сервером. Попытка не была списана.',
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
@@ -547,6 +550,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_no_attempts': 'You have no attempts left for today.',
                 'alert_api_key_missing': 'Gemini API key is not provided. Analysis is not possible.',
                 'alert_api_error': 'Error during analysis. Please check the console or try again later.',
+                // --- ДОБАВЛЕНО: Новый ключ перевода для перегрузки ---
+                'alert_model_overloaded': 'The neural network is overloaded. Please try again in 5 minutes.',
                 'alert_backend_error': 'Server communication error. Attempt was not used.',
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
@@ -900,7 +905,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 showCustomAlert(t.alert_backend_error); // Показываем общую ошибку
                 return false; // Не удалось отправить
             }
-             console.log(`Sending /use_attempt for user ${userId} to ${BACKEND_URL}`);
+             // --- ИЗМЕНЕНИЕ: Добавляем партнера в лог ---
+             console.log(`Sending /use_attempt for user ${userId} (partner: ${currentPartner}) to ${BACKEND_URL}`);
             try {
                 const response = await fetch(`${BACKEND_URL}/use_attempt`, {
                     method: 'POST',
@@ -910,7 +916,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                         'ngrok-skip-browser-warning': 'true'
                         // ------------------------------------------
                     },
-                    body: JSON.stringify({ user_id: userId })
+                    // --- ИЗМЕНЕНИЕ: Добавляем партнера в тело запроса ---
+                    body: JSON.stringify({ user_id: userId, partner: currentPartner })
                 });
 
                 // --- ИЗМЕНЕНИЕ: Обрабатываем ответ сервера ---
@@ -968,6 +975,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             analyzeButton.style.marginBottom = '5px';
             analysisContainer.classList.remove('hidden'); // Показываем прогресс анализа ДО запроса списания
 
+            // --- ИЗМЕНЕНИЕ: Вызываем sendAttemptToServer (уже включает partner) ---
             const attemptSent = await sendAttemptToServer();
 
             if (!attemptSent) {
@@ -1063,7 +1071,15 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                          if (errorData?.error?.message?.includes("User location is not supported")) {
                              throw new Error("User location is not supported"); // Перебрасываем специфическую ошибку
                          }
-                    } catch (e) { /* Ошибка парсинга JSON - используем errorData по умолчанию */ }
+                         // --- ИЗМЕНЕНИЕ: Ищем ошибку перегрузки ---
+                         if (errorData?.error?.message?.toLowerCase().includes("overloaded")) {
+                             throw new Error("Model is overloaded"); // Перебрасываем специфическую ошибку
+                         }
+                    } catch (e) {
+                         // Если это наша кастомная ошибка (location/overloaded), пробрасываем ее
+                         if (e.message.includes("User location") || e.message.includes("overloaded")) throw e;
+                         /* Ошибка парсинга JSON - используем errorData по умолчанию */
+                    }
                     throw new Error(errorData.error ? errorData.error.message : 'Backend network response was not ok');
                 }
 
@@ -1080,6 +1096,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     // Если структура ответа не та, что ожидаем (например, пришла ошибка от Gemini)
                     if (data?.error?.message?.includes("User location is not supported")) {
                          throw new Error("User location is not supported");
+                    }
+                    // --- ИЗМЕНЕНИЕ: Ищем ошибку перегрузки ---
+                    if (data?.error?.message?.toLowerCase().includes("overloaded")) {
+                         throw new Error("Model is overloaded");
                     }
                     console.error("Invalid API response structure from Backend:", data);
                     throw new Error(data?.error?.message || "Invalid API response structure.");
@@ -1129,13 +1149,17 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 // так как ошибка (например, геолокация) - это тоже результат, на который потрачена попытка.
                 // await returnAttemptToServer();
 
+                // --- ИЗМЕНЕНИЕ: Обновлен блок обработки ошибок ---
                 if (error.name === 'AbortError') {
                     showCustomAlert(t.alert_timeout);
                 } else if (error?.message?.includes("User location is not supported")) {
                     showCustomAlert(t.alert_location_not_supported);
+                } else if (error?.message?.toLowerCase().includes("overloaded")) { // <-- НОВАЯ ПРОВЕРКА
+                    showCustomAlert(t.alert_model_overloaded); // <-- ИСПОЛЬЗУЕМ НОВЫЙ ПЕРЕВОД
                 } else {
                     showCustomAlert(t.alert_api_error); // Общая ошибка API
                 }
+                // ---------------------------------------------
 
                  // Сброс интерфейса после ошибки
                  isAnalyzing = false;
@@ -1189,10 +1213,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              // --- ИЗМЕНЕНИЕ: Текст загрузки ставится ДО получения языка ---
              attemptsTextElement.textContent = translations[currentLang].attemptsTextLoading; // Показываем "Загрузка..."
              attemptsTextElement.classList.remove('attempts-error');
-             console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId}`);
+             // --- ИЗМЕНЕНИЕ: Добавляем партнера в лог ---
+             console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId} (partner: ${currentPartner})`);
 
              try {
-                 const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}`, {
+                 // --- ИЗМЕНЕНИЕ: Добавляем partner в URL запроса ---
+                 const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}&partner=${currentPartner}`, {
                      method: 'GET',
                      cache: 'no-cache', // Добавим, чтобы избежать кэширования
                      // --- ИЗМЕНЕНИЕ: Добавляем заголовок для ngrok ---
@@ -1255,7 +1281,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  userId = tg.initDataUnsafe.user.id?.toString();
             }
 
-            console.log("User ID:", userId);
+            // --- ДОБАВЛЕНО: Считываем партнера из URL ---
+            const partnerFromUrl = urlParams.get('partner');
+            if (partnerFromUrl === 'mostbet' || partnerFromUrl === '1win') {
+                currentPartner = partnerFromUrl; // Устанавливаем партнера (mostbet или 1win)
+            }
+            // -----------------------------------------
+            
+            console.log("User ID:", userId, "Partner:", currentPartner); // Обновляем лог
 
             // --- ИЗМЕНЕНИЕ: Убрали setLanguage(currentLang) отсюда ---
             // Язык будет установлен ПОСЛЕ ответа от сервера в loadInitialAttempts()
@@ -1285,4 +1318,3 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
     </script>
 </body>
 </html>
-
