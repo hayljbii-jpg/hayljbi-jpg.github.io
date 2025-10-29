@@ -515,6 +515,24 @@
                     <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3CclipPath id='s'%3E%3Cpath d='M0,0 v30 h60 v-30 z'/%3E%3C/clipPath%3E%3Cpath d='M0,0 v30 h60 v-30 z' fill='%2300247d'/%3E%3Cpath d='M60,0 L0,30 M0,0 L60,30' stroke='%23fff' stroke-width='6' clip-path='url(%23s)'/%3E%3Cpath d='M60,0 L0,30 M0,0 L60,30' stroke='%23cf142b' stroke-width='4' clip-path='url(%23s)'/%3E%3Cpath d='M30,0 v30 M0,15 h60' stroke='%23fff' stroke-width='10'/%3E%3Cpath d='M30,0 v30 M0,15 h60' stroke='%23cf142b' stroke-width='6'/%3E%3C/svg%3E" alt="British Flag">
                     <span>EN</span>
                 </div>
+                <!-- ИЗМЕНЕНИЕ: Добавлены новые языки (Задача 2) -->
+                <div class="language-option" data-lang="zh">
+                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%23DE2910' width='9' height='6'/%3E%3C/svg%3E" alt="Chinese Flag">
+                    <span>ZH</span>
+                </div>
+                <div class="language-option" data-lang="hi">
+                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%23FF9933' width='9' height='2'/%3E%3Crect fill='%23FFFFFF' y='2' width='9' height='2'/%3E%3Crect fill='%23138808' y='4' width='9' height='2'/%3E%3C/svg%3E" alt="Hindi Flag">
+                    <span>HI</span>
+                </div>
+                <div class="language-option" data-lang="lv">
+                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%239E1B32' width='9' height='6'/%3E%3Crect fill='%23FFFFFF' y='2.4' width='9' height='1.2'/%3E%3C/svg%3E" alt="Latvian Flag">
+                    <span>LV</span>
+                </div>
+                <div class="language-option" data-lang="de">
+                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3'/%3E%3Crect width='5' height='2' y='1' fill='%23D00'/%3E%3Crect width='5' height='1' y='2' fill='%23FFCE00'/%3E%3C/svg%3E" alt="German Flag">
+                    <span>DE</span>
+                </div>
+                <!-- КОНЕЦ ИЗМЕНЕНИЯ -->
             </div>
         </div>
     </div>
@@ -754,7 +772,301 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     'baseball': 'Baseball', 'handball': 'Handball', 'rugby': 'Rugby',
                     'cricket': 'Cricket', 'dota2': 'Dota 2', 'cs2': 'CS2'
                 }
+            },
+            // ИЗМЕНЕНИЕ: Добавлены заглушки для новых языков (Задача 2)
+            'zh': {
+                'title': '[zh] 💡 AI Bets',
+                'gameType': '[zh] Game Type',
+                'uploadLabel': '[zh] <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
+                'uploadHint': '[zh] Or just paste a screenshot (Ctrl + V)',
+                'analyzeButton': '[zh] 🔍 Analyze bet',
+                'analyzeButtonLoading': '[zh] ⏳ Analyzing...',
+                'tryAgainButton': '[zh] 🔄 Choose another image',
+                'attemptsTextLoading': '[zh] Loading attempts...',
+                'attemptsTextError': '[zh] Failed to load attempts',
+                'attemptsText': '[zh] Attempts left today: {left} of {total}',
+                'attemptsTimer': '[zh] Attempts will refresh in: <b>{h}h {m}m</b>.',
+                'attemptsResetDeposit': '[zh] To reset the timer - make a deposit on <b>1Win</b>.',
+                'attemptsResetWait': '[zh] New attempts will be available after the timer ends.',
+                'attemptsRefreshing': '[zh] Refreshing attempts...',
+                'footerText': '[zh] Created by OddsAIBot neural network - © 2026',
+                'footerLinkText': '[zh] User Agreement',
+                'profit_header': '[zh] With a $100 bet, you will earn:',
+                'alert_select_image': '[zh] Please upload an event image first.',
+                'alert_select_game_type': '[zh] Please select a game type first.',
+                'alert_no_attempts': '[zh] You have no attempts left for today.',
+                'alert_api_key_missing': '[zh] Gemini API key is not provided. Analysis is not possible.',
+                'alert_api_error': '[zh] Error during analysis. Please check the console or try again later.',
+                'alert_model_overloaded': '[zh] The neural network is overloaded. Please try again in 5 minutes.',
+                'alert_backend_error': '[zh] Server communication error. Attempt was not used.',
+                'alert_location_not_supported': '[zh] Your country is not supported by the neural network. Please enable a VPN to change your location.',
+                'alert_timeout': '[zh] The neural network is taking too long to respond. Please try again.',
+                'alert_no_odds_detected': '[zh] The provided screenshot does not contain betting odds.',
+                'alert_agreement_required': '[zh] Please accept the User Agreement.',
+                'agreement_modal_title': '[zh] User Agreement',
+                'agreement_modal_text': '[zh] Before using the bot, you must read and accept the <a href="{url}" target="_blank" rel="noopener noreferrer">User Agreement</a>.',
+                'agreement_modal_checkbox': '[zh] I agree to the User Agreement',
+                'agreement_modal_button': '[zh] Continue',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                 'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Total Over 2.5 (1.85)", "probability": 75}, {"name": "Match Result: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the CHINESE language.**`,
+                 'analysis_steps': [
+                    '[zh] Analyzing image...',
+                    '[zh] Gathering team data...',
+                    '[zh] Performing AI analysis...',
+                    '[zh] Calculating probabilities...'
+                ],
+                'results_confidence': '[zh] AI CONFIDENCE',
+                'results_signal': '[zh] RELIABLE SIGNAL',
+                'results_events': '[zh] % OF EVENTS',
+                'results_analytics': '[zh] AI ANALYTICS',
+                'gameTypes': {
+                    'football': '[zh] Football', 'basketball': '[zh] Basketball', 'tennis': '[zh] Tennis',
+                    'hockey': '[zh] Hockey', 'volleyball': '[zh] Volleyball', 'boxing': '[zh] Boxing',
+                    'mma': '[zh] MMA', 'ufc': '[zh] UFC', 'table-tennis': '[zh] Table Tennis',
+                    'baseball': '[zh] Baseball', 'handball': '[zh] Handball', 'rugby': '[zh] Rugby',
+                    'cricket': '[zh] Cricket', 'dota2': '[zh] Dota 2', 'cs2': '[zh] CS2'
+                }
+            },
+            'hi': {
+                'title': '[hi] 💡 AI Bets',
+                'gameType': '[hi] Game Type',
+                'uploadLabel': '[hi] <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
+                'uploadHint': '[hi] Or just paste a screenshot (Ctrl + V)',
+                'analyzeButton': '[hi] 🔍 Analyze bet',
+                'analyzeButtonLoading': '[hi] ⏳ Analyzing...',
+                'tryAgainButton': '[hi] 🔄 Choose another image',
+                'attemptsTextLoading': '[hi] Loading attempts...',
+                'attemptsTextError': '[hi] Failed to load attempts',
+                'attemptsText': '[hi] Attempts left today: {left} of {total}',
+                'attemptsTimer': '[hi] Attempts will refresh in: <b>{h}h {m}m</b>.',
+                'attemptsResetDeposit': '[hi] To reset the timer - make a deposit on <b>1Win</b>.',
+                'attemptsResetWait': '[hi] New attempts will be available after the timer ends.',
+                'attemptsRefreshing': '[hi] Refreshing attempts...',
+                'footerText': '[hi] Created by OddsAIBot neural network - © 2026',
+                'footerLinkText': '[hi] User Agreement',
+                'profit_header': '[hi] With a $100 bet, you will earn:',
+                'alert_select_image': '[hi] Please upload an event image first.',
+                'alert_select_game_type': '[hi] Please select a game type first.',
+                'alert_no_attempts': '[hi] You have no attempts left for today.',
+                'alert_api_key_missing': '[hi] Gemini API key is not provided. Analysis is not possible.',
+                'alert_api_error': '[hi] Error during analysis. Please check the console or try again later.',
+                'alert_model_overloaded': '[hi] The neural network is overloaded. Please try again in 5 minutes.',
+                'alert_backend_error': '[hi] Server communication error. Attempt was not used.',
+                'alert_location_not_supported': '[hi] Your country is not supported by the neural network. Please enable a VPN to change your location.',
+                'alert_timeout': '[hi] The neural network is taking too long to respond. Please try again.',
+                'alert_no_odds_detected': '[hi] The provided screenshot does not contain betting odds.',
+                'alert_agreement_required': '[hi] Please accept the User Agreement.',
+                'agreement_modal_title': '[hi] User Agreement',
+                'agreement_modal_text': '[hi] Before using the bot, you must read and accept the <a href="{url}" target="_blank" rel="noopener noreferrer">User Agreement</a>.',
+                'agreement_modal_checkbox': '[hi] I agree to the User Agreement',
+                'agreement_modal_button': '[hi] Continue',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                 'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Total Over 2.5 (1.85)", "probability": 75}, {"name": "Match Result: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the HINDI language.**`,
+                 'analysis_steps': [
+                    '[hi] Analyzing image...',
+                    '[hi] Gathering team data...',
+                    '[hi] Performing AI analysis...',
+                    '[hi] Calculating probabilities...'
+                ],
+                'results_confidence': '[hi] AI CONFIDENCE',
+                'results_signal': '[hi] RELIABLE SIGNAL',
+                'results_events': '[hi] % OF EVENTS',
+                'results_analytics': '[hi] AI ANALYTICS',
+                'gameTypes': {
+                    'football': '[hi] Football', 'basketball': '[hi] Basketball', 'tennis': '[hi] Tennis',
+                    'hockey': '[hi] Hockey', 'volleyball': '[hi] Volleyball', 'boxing': '[hi] Boxing',
+                    'mma': '[hi] MMA', 'ufc': '[hi] UFC', 'table-tennis': '[hi] Table Tennis',
+                    'baseball': '[hi] Baseball', 'handball': '[hi] Handball', 'rugby': '[hi] Rugby',
+                    'cricket': '[hi] Cricket', 'dota2': '[hi] Dota 2', 'cs2': '[hi] CS2'
+                }
+            },
+            'lv': {
+                'title': '[lv] 💡 AI Bets',
+                'gameType': '[lv] Game Type',
+                'uploadLabel': '[lv] <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
+                'uploadHint': '[lv] Or just paste a screenshot (Ctrl + V)',
+                'analyzeButton': '[lv] 🔍 Analyze bet',
+                'analyzeButtonLoading': '[lv] ⏳ Analyzing...',
+                'tryAgainButton': '[lv] 🔄 Choose another image',
+                'attemptsTextLoading': '[lv] Loading attempts...',
+                'attemptsTextError': '[lv] Failed to load attempts',
+                'attemptsText': '[lv] Attempts left today: {left} of {total}',
+                'attemptsTimer': '[lv] Attempts will refresh in: <b>{h}h {m}m</b>.',
+                'attemptsResetDeposit': '[lv] To reset the timer - make a deposit on <b>1Win</b>.',
+                'attemptsResetWait': '[lv] New attempts will be available after the timer ends.',
+                'attemptsRefreshing': '[lv] Refreshing attempts...',
+                'footerText': '[lv] Created by OddsAIBot neural network - © 2026',
+                'footerLinkText': '[lv] User Agreement',
+                'profit_header': '[lv] With a $100 bet, you will earn:',
+                'alert_select_image': '[lv] Please upload an event image first.',
+                'alert_select_game_type': '[lv] Please select a game type first.',
+                'alert_no_attempts': '[lv] You have no attempts left for today.',
+                'alert_api_key_missing': '[lv] Gemini API key is not provided. Analysis is not possible.',
+                'alert_api_error': '[lv] Error during analysis. Please check the console or try again later.',
+                'alert_model_overloaded': '[lv] The neural network is overloaded. Please try again in 5 minutes.',
+                'alert_backend_error': '[lv] Server communication error. Attempt was not used.',
+                'alert_location_not_supported': '[lv] Your country is not supported by the neural network. Please enable a VPN to change your location.',
+                'alert_timeout': '[lv] The neural network is taking too long to respond. Please try again.',
+                'alert_no_odds_detected': '[lv] The provided screenshot does not contain betting odds.',
+                'alert_agreement_required': '[lv] Please accept the User Agreement.',
+                'agreement_modal_title': '[lv] User Agreement',
+                'agreement_modal_text': '[lv] Before using the bot, you must read and accept the <a href="{url}" target="_blank" rel="noopener noreferrer">User Agreement</a>.',
+                'agreement_modal_checkbox': '[lv] I agree to the User Agreement',
+                'agreement_modal_button': '[lv] Continue',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                 'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Total Over 2.5 (1.85)", "probability": 75}, {"name": "Match Result: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the LATVIAN language.**`,
+                 'analysis_steps': [
+                    '[lv] Analyzing image...',
+                    '[lv] Gathering team data...',
+                    '[lv] Performing AI analysis...',
+                    '[lv] Calculating probabilities...'
+                ],
+                'results_confidence': '[lv] AI CONFIDENCE',
+                'results_signal': '[lv] RELIABLE SIGNAL',
+                'results_events': '[lv] % OF EVENTS',
+                'results_analytics': '[lv] AI ANALYTICS',
+                'gameTypes': {
+                    'football': '[lv] Football', 'basketball': '[lv] Basketball', 'tennis': '[lv] Tennis',
+                    'hockey': '[lv] Hockey', 'volleyball': '[lv] Volleyball', 'boxing': '[lv] Boxing',
+                    'mma': '[lv] MMA', 'ufc': '[lv] UFC', 'table-tennis': '[lv] Table Tennis',
+                    'baseball': '[lv] Baseball', 'handball': '[lv] Handball', 'rugby': '[lv] Rugby',
+                    'cricket': '[lv] Cricket', 'dota2': '[lv] Dota 2', 'cs2': '[lv] CS2'
+                }
+            },
+            'de': {
+                'title': '[de] 💡 AI Bets',
+                'gameType': '[de] Game Type',
+                'uploadLabel': '[de] <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Upload event image',
+                'uploadHint': '[de] Or just paste a screenshot (Ctrl + V)',
+                'analyzeButton': '[de] 🔍 Analyze bet',
+                'analyzeButtonLoading': '[de] ⏳ Analyzing...',
+                'tryAgainButton': '[de] 🔄 Choose another image',
+                'attemptsTextLoading': '[de] Loading attempts...',
+                'attemptsTextError': '[de] Failed to load attempts',
+                'attemptsText': '[de] Attempts left today: {left} of {total}',
+                'attemptsTimer': '[de] Attempts will refresh in: <b>{h}h {m}m</b>.',
+                'attemptsResetDeposit': '[de] To reset the timer - make a deposit on <b>1Win</b>.',
+                'attemptsResetWait': '[de] New attempts will be available after the timer ends.',
+                'attemptsRefreshing': '[de] Refreshing attempts...',
+                'footerText': '[de] Created by OddsAIBot neural network - © 2026',
+                'footerLinkText': '[de] User Agreement',
+                'profit_header': '[de] With a $100 bet, you will earn:',
+                'alert_select_image': '[de] Please upload an event image first.',
+                'alert_select_game_type': '[de] Please select a game type first.',
+                'alert_no_attempts': '[de] You have no attempts left for today.',
+                'alert_api_key_missing': '[de] Gemini API key is not provided. Analysis is not possible.',
+                'alert_api_error': '[de] Error during analysis. Please check the console or try again later.',
+                'alert_model_overloaded': '[de] The neural network is overloaded. Please try again in 5 minutes.',
+                'alert_backend_error': '[de] Server communication error. Attempt was not used.',
+                'alert_location_not_supported': '[de] Your country is not supported by the neural network. Please enable a VPN to change your location.',
+                'alert_timeout': '[de] The neural network is taking too long to respond. Please try again.',
+                'alert_no_odds_detected': '[de] The provided screenshot does not contain betting odds.',
+                'alert_agreement_required': '[de] Please accept the User Agreement.',
+                'agreement_modal_title': '[de] User Agreement',
+                'agreement_modal_text': '[de] Before using the bot, you must read and accept the <a href="{url}" target="_blank" rel="noopener noreferrer">User Agreement</a>.',
+                'agreement_modal_checkbox': '[de] I agree to the User Agreement',
+                'agreement_modal_button': '[de] Continue',
+                'analyze_prompt': 'Analyze this bet on {gameType}.',
+                 'system_prompt': `You are BetGPT, an AI Analyst.
+
+**Task 1: Validate Image**
+1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
+2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
+3.  **IF YES**: Proceed to analysis.
+
+**Task 2: Analysis and JSON Response**
+1.  Find 3-4 main markets (e.g., "Match Result", "Total").
+2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
+3.  Estimate the probability of each outcome in percent.
+4.  **Format the JSON response STRICTLY according to these rules**:
+
+* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Total Over 2.5 (1.85)", "probability": 75}, {"name": "Match Result: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
+* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
+* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
+* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
+
+${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
+
+**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the GERMAN language.**`,
+                 'analysis_steps': [
+                    '[de] Analyzing image...',
+                    '[de] Gathering team data...',
+                    '[de] Performing AI analysis...',
+                    '[de] Calculating probabilities...'
+                ],
+                'results_confidence': '[de] AI CONFIDENCE',
+                'results_signal': '[de] RELIABLE SIGNAL',
+                'results_events': '[de] % OF EVENTS',
+                'results_analytics': '[de] AI ANALYTICS',
+                'gameTypes': {
+                    'football': '[de] Football', 'basketball': '[de] Basketball', 'tennis': '[de] Tennis',
+                    'hockey': '[de] Hockey', 'volleyball': '[de] Volleyball', 'boxing': '[de] Boxing',
+                    'mma': '[de] MMA', 'ufc': '[de] UFC', 'table-tennis': '[de] Table Tennis',
+                    'baseball': '[de] Baseball', 'handball': '[de] Handball', 'rugby': '[de] Rugby',
+                    'cricket': '[de] Cricket', 'dota2': '[de] Dota 2', 'cs2': '[de] CS2'
+                }
             }
+            // КОНЕЦ ИЗМЕНЕНИЯ
         };
 
         const imageUpload = document.getElementById('imageUpload');
@@ -876,6 +1188,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
         // --- Функция для установки языка интерфейса ---
         function setLanguage(lang) {
+            // ИЗМЕНЕНИЕ: Проверяем, существует ли перевод, иначе 'ru'
+            if (!translations[lang]) {
+                lang = 'ru';
+            }
+            currentLang = lang; // Устанавливаем глобальную переменную
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
             const option = document.querySelector(`.language-option[data-lang="${lang}"]`);
             if (option) {
                 selectedLangFlag.src = option.querySelector('.flag-icon').src;
@@ -968,7 +1287,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         languageOptions.forEach(option => {
             option.addEventListener('click', () => {
                 const newLang = option.dataset.lang;
-                currentLang = newLang; 
+                // currentLang = newLang; // setLanguage теперь делает это
                 setLanguage(newLang); 
                 setLanguageOnServer(newLang); 
                 languageOptionsContainer.classList.remove('show');
@@ -1212,8 +1531,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 const imageBase64_full = imagePreview.src;
                 const gameTypeValue = gameTypeSelect.options[gameTypeSelect.selectedIndex].text;
 
+                // ИЗМЕНЕНИЕ: Используем 'en' prompt для анализа, но 'system_prompt' на нужном языке
                 const userPromptText = translations['en'].analyze_prompt.replace('{gameType}', gameTypeValue); 
                 const systemPromptText = translations[currentLang].system_prompt;
+                // --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 
                 const mimeType = imageBase64_full.split(',')[0].split(':')[1].split(';')[0];
@@ -1490,7 +1811,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             console.log("User ID:", userId, "Partner:", currentPartner); 
 
             // Сначала устанавливаем язык по умолчанию, чтобы модальное окно имело текст
-            setLanguage(currentLang);
+            // ИЗМЕНЕНИЕ: Устанавливаем язык, но setLanguage() сама обработает 'ru'
+            setLanguage(currentLang); 
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
             // --- ИЗМЕНЕНИЕ (п.4): Логика проверки соглашения ---
             if (userId) {
