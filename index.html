@@ -193,6 +193,9 @@
             box-sizing: border-box;
             margin-top: 0;
             margin-bottom: 20px; /* Отступ снизу */
+            /* ИЗМЕНЕНИЕ (п.3 ТЗ): Стили для таймера */
+            font-size: 14px;
+            line-height: 1.5;
         }
         .attempts-error {
             background-color: #e53935; /* Красный */
@@ -427,7 +430,8 @@
             display: flex;
             align-items: center;
             margin-bottom: 20px;
-            cursor: pointer;
+            /* ИЗМЕНЕНИЕ (п.2 ТЗ): Убираем курсор со всего контейнера */
+            /* cursor: pointer; */ 
         }
         .checkbox-container input {
             display: none;
@@ -443,6 +447,8 @@
             align-items: center;
             justify-content: center;
             transition: background-color 0.2s, border-color 0.2s;
+            /* ИЗМЕНЕНИЕ (п.2 ТЗ): Делаем сам чекбокс кликабельным */
+            cursor: pointer;
         }
         .custom-checkbox svg {
             display: none;
@@ -462,7 +468,8 @@
             font-size: 14px;
             color: #fff;
             flex: 1;
-            cursor: pointer;
+            /* ИЗМЕНЕНИЕ (п.2 ТЗ): Убираем курсор с текста */
+            /* cursor: pointer; */
         }
 
     </style>
@@ -478,12 +485,14 @@
             </p>
             <div class="checkbox-container">
                 <input type="checkbox" id="agreementCheckbox">
+                <!-- ИЗМЕНЕНИЕ (п.2 ТЗ): Span теперь будет кликабельным (см. JS) -->
                 <span class="custom-checkbox">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 </span>
-                <label for="agreementCheckbox" id="agreementCheckboxLabel">Я согласен с пользовательскими соглашениями</label>
+                <!-- ИЗМЕНЕНИЕ (п.2 ТЗ): Убран 'for', чтобы текст не был кликабельным -->
+                <label id="agreementCheckboxLabel">Я согласен с пользовательскими соглашениями</label>
             </div>
             <button id="agreementButton" class="button primary-button" disabled>Продолжить</button>
         </div>
@@ -588,6 +597,10 @@
         let isAnalyzing = false;
         let userId = null;
         let currentPartner = '1win'; 
+        
+        // ИЗМЕНЕНИЕ (п.3 ТЗ): Глобальные переменные для таймера
+        let countdownInterval = null; // Хранит ID интервала
+        let cooldownEndTime = null; // Хранит ISO строку времени окончания кулдауна
 
         const translations = {
             'ru': {
@@ -601,6 +614,11 @@
                 'attemptsTextLoading': 'Загрузка попыток...',
                 'attemptsTextError': 'Ошибка загрузки попыток',
                 'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
+                // ИЗМЕНЕНИЕ (п.3 ТЗ): Новые тексты для таймера
+                'attemptsTimer': 'Попытки обновятся через: <b>{h} ч {m} мин</b>.',
+                'attemptsResetDeposit': 'Для сброса таймера - сделайте депозит в <b>1Win</b>.',
+                'attemptsResetWait': 'Новые попытки будут доступны после окончания таймера.',
+                'attemptsRefreshing': 'Обновляем попытки...',
                 // ИЗМЕНЕНИЕ (п.5): Обновлен текст футера
                 'footerText': 'Создано нейросетью OddsAIBot - © 2026',
                 // ИЗМЕНЕНИЕ (п.5): Добавлен текст для ссылки
@@ -673,6 +691,11 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'attemptsTextLoading': 'Loading attempts...',
                 'attemptsTextError': 'Failed to load attempts',
                 'attemptsText': 'Attempts left today: {left} of {total}',
+                // ИЗМЕНЕНИЕ (п.3 ТЗ): Новые тексты для таймера
+                'attemptsTimer': 'Attempts will refresh in: <b>{h}h {m}m</b>.',
+                'attemptsResetDeposit': 'To reset the timer - make a deposit on <b>1Win</b>.',
+                'attemptsResetWait': 'New attempts will be available after the timer ends.',
+                'attemptsRefreshing': 'Refreshing attempts...',
                 'footerText': 'Created by OddsAIBot neural network - © 2026',
                 'footerLinkText': 'User Agreement',
                 'profit_header': 'With a $100 bet, you will earn:',
@@ -773,19 +796,78 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         // --- Функция для обновления состояния кнопки анализа ---
         function updateAnalyzeButtonState() {
             const imageLoaded = !imagePreviewContainer.classList.contains('hidden');
-            // Кнопка активна, если загружено изображение И попытки загружены (attemptsLeft !== -1) И попыток > 0
-            analyzeButton.disabled = !imageLoaded || attemptsLeft <= 0 || attemptsLeft === -1;
+            // Кнопка активна, если загружено изображение И попытки загружены (attemptsLeft !== -1) И (попыток > 0 ИЛИ кулдаун не активен)
+            analyzeButton.disabled = !imageLoaded || attemptsLeft === -1 || (attemptsLeft <= 0 && cooldownEndTime);
         }
 
-        // --- Функция для обновления текста о попытках ---
+        // --- ИЗМЕНЕНИЕ (п.3 ТЗ): Новая функция для запуска таймера ---
+        function startCountdown(endTimeISO) {
+            const t = translations[currentLang];
+            const endTime = new Date(endTimeISO).getTime();
+            
+            // Очищаем старый таймер, если он был
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            function updateTimer() {
+                const now = new Date().getTime();
+                const distance = endTime - now;
+
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    attemptsTextElement.textContent = t.attemptsRefreshing;
+                    // Перезагружаем попытки с сервера
+                    loadInitialAttempts(); 
+                    return;
+                }
+
+                // Расчет времени
+                const hours = Math.floor(distance / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                // const seconds = Math.floor((distance % (1000 * 60)) / 1000); // По ТЗ секунды не нужны, только часы/минуты
+
+                // Формируем строку
+                let timerString = t.attemptsTimer
+                    .replace('{h}', hours)
+                    .replace('{m}', minutes);
+                
+                // Добавляем специфичное сообщение для партнера
+                if (currentPartner === '1win') {
+                    timerString += `<br>${t.attemptsResetDeposit}`;
+                } else if (currentPartner === 'mostbet') {
+                    timerString += `<br>${t.attemptsResetWait}`;
+                }
+
+                attemptsTextElement.innerHTML = timerString;
+                attemptsTextElement.classList.remove('attempts-error');
+                updateAnalyzeButtonState();
+            }
+
+            updateTimer(); // Запускаем сразу
+            countdownInterval = setInterval(updateTimer, 1000); // Обновляем каждую секунду
+        }
+
+        // --- ИЗМЕНЕНИЕ (п.3 ТЗ): Функция для обновления текста о попытках ---
         function updateAttemptsText() {
             const t = translations[currentLang];
+            
+            // Очищаем старый таймер, если он был
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
             if (attemptsLeft === -1) {
-                // Попытки еще не загружены или ошибка загрузки
+                // Попытки еще не загружены или ошибка загрузки (текст устанавливается в loadInitialAttempts)
+            } else if (attemptsLeft === 0 && cooldownEndTime) {
+                // Попыток нет, и есть активный кулдаун -> запускаем таймер
+                startCountdown(cooldownEndTime);
             } else if (attemptsLeft >= 0) {
-                // Попытки успешно загружены
+                // Попытки есть (или 0, но нет кулдауна - редкий случай)
                 attemptsTextElement.classList.remove('attempts-error');
-                attemptsTextElement.textContent = t.attemptsText
+                attemptsTextElement.innerHTML = t.attemptsText
                     .replace('{left}', attemptsLeft)
                     .replace('{total}', totalAttempts);
             }
@@ -814,7 +896,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             } else if (attemptsLeft === -1) {
                  attemptsTextElement.textContent = t.attemptsTextLoading;
             } else {
-                 updateAttemptsText(); 
+                 updateAttemptsText(); // <-- Эта функция теперь управляет и таймером
             }
 
             // ИЗМЕНЕНИЕ (п.5): Обновление текстов футера
@@ -1048,6 +1130,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({})); 
                     console.error('Failed to send attempt usage:', response.status, errorData);
+                    
+                    // ИЗМЕНЕНИЕ (п.3 ТЗ): Сохраняем кулдаун, даже если списание не удалось (попыток нет)
+                    if (errorData.cooldown_end_iso) {
+                        cooldownEndTime = errorData.cooldown_end_iso;
+                    }
+                    attemptsLeft = 0; // Принудительно ставим 0, т.к. сервер сказал "нет"
+                    updateAttemptsText(); // Это запустит таймер
+                    
                     showCustomAlert(errorData.error || t.alert_backend_error); 
                     return false; 
                 }
@@ -1056,7 +1146,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 console.log('Attempt usage sent successfully:', result);
                 if (typeof result.attempts_remaining === 'number') {
                      attemptsLeft = result.attempts_remaining; 
-                     updateAttemptsText(); 
+                     // ИЗМЕНЕНИЕ (п.3 ТЗ): Сохраняем кулдаун, если он пришел
+                     cooldownEndTime = result.cooldown_end_iso || null;
+                     updateAttemptsText(); // Обновляем текст (и запускаем таймер, если attemptsLeft=0)
                 }
                 return true; // Успешно списали
             } catch (error) {
@@ -1082,7 +1174,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  showCustomAlert(t.alert_select_image); return;
             }
              if (attemptsLeft <= 0) {
-                  showCustomAlert(t.alert_no_attempts); return;
+                  // ИЗМЕНЕНИЕ (п.3 ТЗ): Проверяем не только attemptsLeft, но и наличие таймера
+                  if (cooldownEndTime) {
+                      showCustomAlert(t.alert_no_attempts); // Показываем алерт, если таймер активен
+                  } else {
+                      // Попыток 0, но таймера нет (ошибка? или только что кончились?)
+                      // Попробуем запросить /use_attempt, он вернет ошибку и запустит таймер
+                      console.log("Attempts 0, but no cooldown. Triggering use_attempt to check/start cooldown.");
+                  }
+                  // В любом случае, если attemptsLeft <= 0, мы не должны продолжать
+                  return;
              }
 
             // --- ИЗМЕНЕНИЕ (п.1): Блокируем интерфейс, но НЕ списываем попытку ---
@@ -1317,6 +1418,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
         // --- Функция загрузки начальных данных (попыток) ---
         async function loadInitialAttempts() { 
+             // ИЗМЕНЕНИЕ (п.3 ТЗ): Очищаем таймер перед загрузкой
+             if (countdownInterval) {
+                 clearInterval(countdownInterval);
+                 countdownInterval = null;
+             }
+             cooldownEndTime = null; // Сбрасываем кулдаун
+            
              attemptsTextElement.textContent = translations[currentLang].attemptsTextLoading; 
              attemptsTextElement.classList.remove('attempts-error');
              console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId} (partner: ${currentPartner})`);
@@ -1337,6 +1445,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  console.log("Attempts and lang loaded:", data);
                  if (typeof data.attempts_left === 'number') {
                      attemptsLeft = data.attempts_left;
+                     // ИЗМЕНЕНИЕ (п.3 ТЗ): Сохраняем время окончания кулдауна
+                     cooldownEndTime = data.cooldown_end_iso || null;
                      
                      if (data.lang && translations[data.lang]) {
                          currentLang = data.lang;
@@ -1345,13 +1455,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                          console.log("No valid language from server, using default:", currentLang);
                      }
                      
-                     setLanguage(currentLang); // Обновляем ВЕСЬ интерфейс, включая язык и попытки
+                     setLanguage(currentLang); // Обновляем ВЕСЬ интерфейс, включая язык и попытки (и таймер)
                  } else {
                       throw new Error("Invalid 'attempts_left' format in response");
                  }
              } catch (error) {
                  console.error('Failed to load initial attempts:', error);
                  attemptsLeft = -1; 
+                 cooldownEndTime = null; // Сбрасываем кулдаун при ошибке
                  setLanguage(currentLang); 
                  attemptsTextElement.textContent = translations[currentLang].attemptsTextError; 
                  attemptsTextElement.classList.add('attempts-error'); 
@@ -1402,7 +1513,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  updateAnalyzeButtonState(); 
             }
             
-            // --- ИЗМЕНЕНИЕ (п.4): Обработчики модального окна ---
+            // --- ИЗМЕНЕНИЕ (п.2 ТЗ): Обработчики модального окна ---
+            // Навешиваем клик только на сам чекбокс (span)
+            document.querySelector('.custom-checkbox').addEventListener('click', () => {
+                agreementCheckbox.checked = !agreementCheckbox.checked;
+                // Вручную вызываем событие 'change', чтобы сработал listener ниже
+                agreementCheckbox.dispatchEvent(new Event('change')); 
+            });
+            
             agreementCheckbox.addEventListener('change', () => {
                 agreementButton.disabled = !agreementCheckbox.checked;
             });
@@ -1423,4 +1541,3 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
     </script>
 </body>
 </html>
-
