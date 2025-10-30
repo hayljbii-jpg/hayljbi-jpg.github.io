@@ -607,8 +607,20 @@
 
         const BACKEND_URL = 'https://wergune.duckdns.org';
         const MY_CUSTOM_PROMPT = "Анализируй ставки с точки зрения профессионального каппера. Будь краток, но убедителен.";
-        // ИЗМЕНЕНИЕ (п.4): URL для соглашения
-        const AGREEMENT_URL = "https://telegra.ph/Polzovatelskoe-soglashenie-OddsAIBot-10-28";
+        
+        // [ИЗМЕНЕНИЕ]: Удалена константа AGREEMENT_URL
+        
+        // ИЗМЕНЕНИЕ (ЗАДАЧА 30.10): Карта ссылок для Пользовательского соглашения
+        // Добавлена новая константа-объект agreementLinks
+        const agreementLinks = {
+            'ru': 'https://telegra.ph/Polzovatelskoe-soglashenie-OddsAIBot-10-28',
+            'en': 'https://telegra.ph/OddsAIBot-User-Agreement-10-30',
+            'zh': 'https://telegra.ph/OddsAIBot-%E7%94%A8%E6%88%B7%E5%8D%8F%E8%AE%AE-10-30',
+            'hi': 'https://telegra.ph/%E0%A4%91%E0%A4%A1%E0%A4%B8%E0%A4%8F%E0%A4%86%E0%A4%88%E0%A4%AC%E0%A4%9F-%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A4%A4-%E0%A4%85%E0%A4%A8%E0%A4%AC%E0%A4%82%E0%A4%A7-10-30',
+            'lv': 'https://telegra.ph/OddsAIBot-Lietot%C4%81ja-l%C4%ABgums-10-30',
+            'de': 'https://telegra.ph/OddsAIBot-Nutzervereinbarung-10-30'
+        };
+        // [КОНЕЦ ИЗМЕНЕНИЯ]
 
         let currentLang = 'ru'; 
         let attemptsLeft = -1; 
@@ -873,7 +885,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_api_error': 'विश्लेषण के दौरान त्रुटि। कृपया कंसोल जांचें या बाद में पुनः प्रयास करें।',
                 'alert_model_overloaded': 'न्यूरल नेटवर्क ओवरलोड है। कृपया 5 मिनट बाद पुनः प्रयास करें।',
                 'alert_backend_error': 'सर्वर संचार त्रुटि। प्रयास का उपयोग नहीं किया गया।',
-                'alert_location_not_supported': 'आपका देश न्यूरल नेटवर्क द्वारा समर्थित नहीं है। कृपया स्थान बदलने के लिए वीपीएन सक्षम करें।',
+                'alert_location_not_supported': 'आपका देश न्यूरल नेटवर्क द्वारा समर्थित नहीं है। कृपया स्थान बदलने के لیے वीपीएन सक्षम करें।',
                 'alert_timeout': 'न्यूरल नेटवर्क प्रतिक्रिया देने में बहुत अधिक समय ले रहा है। कृपया पुनः प्रयास करें।',
                 'alert_no_odds_detected': 'प्रदान किए गए स्क्रीनशॉट में बेटिंग ऑड्स नहीं हैं।',
                 'alert_agreement_required': 'कृपया उपयोगकर्ता समझौता स्वीकार करें।',
@@ -912,7 +924,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'results_confidence': 'एआई कॉन्फिडेंस',
                 'results_signal': 'भरोसेमंद सिग्नल',
                 'results_events': 'ईवेंट्स का %',
-                'results_analytics': 'एआई एनालिटिक्स',
+                'results_analytics': 'एआई एनालिटICS',
                 'gameTypes': {
                     'football': 'फ़ुटबॉल', 'basketball': 'बास्केटबॉल', 'tennis': 'टेनिस',
                     'hockey': 'हॉकी', 'volleyball': 'वॉलीबॉल', 'boxing': 'बॉक्सिंग',
@@ -1018,7 +1030,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_api_key_missing': 'Gemini API-Schlüssel nicht angegeben. Analyse nicht möglich.',
                 'alert_api_error': 'Fehler bei der Analyse. Bitte überprüfen Sie die Konsole oder versuchen Sie es später erneut.',
                 'alert_model_overloaded': 'Das neuronale Netz ist überlastet. Bitte versuchen Sie es in 5 Minuten erneut.',
-                'alert_backend_error': 'Server-Kommunikationsfehler. Versuch wurde nicht verbraucht.',
+                'alert_backend_error': 'Server-Komмуikationsfehler. Versuch wurde nicht verbraucht.',
                 'alert_location_not_supported': 'Ihr Land wird vom neuronalen Netz nicht unterstützt. Bitte aktivieren Sie ein VPN, um Ihren Standort zu ändern.',
                 'alert_timeout': 'Das neuronale Netz antwortet zu langsam. Bitte versuchen Sie es erneut.',
                 'alert_no_odds_detected': 'Der bereitgestellte Screenshot enthält keine Wettquoten.',
@@ -1222,15 +1234,26 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  updateAttemptsText(); // <-- Эта функция теперь управляет и таймером
             }
 
-            // ИЗМЕНЕНИЕ (п.5): Обновление текстов футера
+            // [ИЗМЕНЕНИЕ]: Блок обновления ссылок и модального окна
+            // ИЗМЕНЕНИЕ (п.5): Обновление текста футера (только 1 строка)
             document.querySelector('.footer-text').textContent = t.footerText;
-            document.getElementById('footerAgreementLink').textContent = t.footerLinkText;
+            
+            // ИЗМЕНЕНИЕ (ЗАДАЧА 30.10): Динамическое обновление ссылок соглашения
+            // Получаем URL для текущего языка, с резервным вариантом 'ru'
+            const currentAgreementUrl = agreementLinks[currentLang] || agreementLinks['ru'];
 
-            // ИЗМЕНЕНИЕ (п.4): Обновление текстов модального окна
+            // Обновляем ссылку в футере (и текст, и href)
+            const footerLink = document.getElementById('footerAgreementLink');
+            footerLink.href = currentAgreementUrl;
+            footerLink.textContent = t.footerLinkText;
+
+            // ИЗМЕНЕНИЕ (п.4): Обновление текстов модального окна (с динамическим URL)
             document.getElementById('agreementTitle').textContent = t.agreement_modal_title;
-            document.getElementById('agreementText').innerHTML = t.agreement_modal_text.replace('{url}', AGREEMENT_URL);
+            // Обновляем текст модального окна, ВСТАВЛЯЯ правильный URL
+            document.getElementById('agreementText').innerHTML = t.agreement_modal_text.replace('{url}', currentAgreementUrl);
             document.getElementById('agreementCheckboxLabel').textContent = t.agreement_modal_checkbox;
             document.getElementById('agreementButton').textContent = t.agreement_modal_button;
+            // [КОНЕЦ ИЗМЕНЕНИЯ]
 
             const gameOptions = gameTypeSelect.querySelectorAll('option:not([disabled])');
             gameOptions.forEach(option => {
@@ -1670,7 +1693,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 } else {
                     displayResults(results); // Показываем результаты
                     
-                    // --- ИЗМЕНЕНИЕ (п.2): Скрываем превью изображения ---
+                    // --- ИЗЗМЕНЕНИЕ (п.2): Скрываем превью изображения ---
                     imagePreviewContainer.classList.add('hidden');
                     // -------------------------------------------
                     
@@ -1877,4 +1900,3 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
     </script>
 </body>
 </html>
-
