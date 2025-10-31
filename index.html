@@ -1895,8 +1895,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 const agreementKey = `agreement_accepted_${currentPartner}`;
                 localStorage.setItem(agreementKey, 'true');
                 agreementModal.classList.remove('show');
-                // После принятия не нужно ничего перезагружать, 
-                // т.к. данные уже загружены и отрисованы под модальным окном.
+                // ИЗМЕНЕНИЕ: После принятия не нужно ничего перезагружать, 
+                // т.к. данные уже были загружены и отрисованы под модальным окном.
             } else {
                 showCustomAlert((translations[currentLang] || translations['ru']).alert_agreement_required);
             }
