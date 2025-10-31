@@ -1742,79 +1742,86 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
        // --- Обработчик кнопки анализа ---
         analyzeButton.onclick = analyzeBet;
 
-# --- БЛОК: ИСПРАВЛЕНИЕ ИНИЦИАЛИЗАЦИИ ПРИЛОЖЕНИЯ ---
-
         // --- Функция "прогрева" бэкенда ---
         async function pingBackend() {
-            if (!userId) return;
+            if (!userId) return; 
             console.log("Pinging backend to potentially bypass ngrok warning...");
             try {
-                // ИЗМЕНЕНИЕ: Добавлен await и таймаут, чтобы функция дожидалась ответа.
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-секундный таймаут
-
-                await fetch(`${BACKEND_URL}/`, {
+                fetch(`${BACKEND_URL}/`, { 
                      method: 'GET',
                      cache: 'no-cache',
-                     headers: { 'ngrok-skip-browser-warning': 'true' },
-                     signal: controller.signal
+                     headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                     }
+                 }).catch(err => {
+                     console.log("Ping request finished (errors ignored).");
                  });
-                clearTimeout(timeoutId);
-                console.log("Ping request finished successfully.");
             } catch (error) {
-                 console.log("Ping request failed or timed out (error ignored).");
+                 console.log("Ping request failed (error ignored).");
             }
+        }
+        
+        // --- Функция для запуска загрузки данных ---
+        function startAppLoad() {
+             pingBackend(); 
+             setTimeout(() => {
+                 loadInitialAttempts(); 
+             }, 150); 
         }
 
         // --- Функция загрузки начальных данных (попыток) ---
-        async function loadInitialAttempts() {
+        async function loadInitialAttempts() { 
+             // ИЗМЕНЕНИЕ (п.3 ТЗ): Очищаем таймер перед загрузкой
              if (countdownInterval) {
                  clearInterval(countdownInterval);
                  countdownInterval = null;
              }
-             cooldownEndTime = null;
-
-             attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextLoading;
+             cooldownEndTime = null; // Сбрасываем кулдаун
+            
+             // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
+             attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextLoading; 
              attemptsTextElement.classList.remove('attempts-error');
              console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId} (partner: ${currentPartner})`);
 
              try {
                  const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}&partner=${currentPartner}`, {
                      method: 'GET',
-                     cache: 'no-cache',
-                     headers: { 'ngrok-skip-browser-warning': 'true' }
+                     cache: 'no-cache', 
+                     headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                     }
                  });
                  if (!response.ok) {
                       console.error(`Failed to load attempts: ${response.status}`);
                       throw new Error(`HTTP error ${response.status}`);
                  }
-                 const data = await response.json();
+                 const data = await response.json(); 
                  console.log("Attempts and lang loaded:", data);
                  if (typeof data.attempts_left === 'number') {
                      attemptsLeft = data.attempts_left;
+                     // ИЗМЕНЕНИЕ (п.3 ТЗ): Сохраняем время окончания кулдауна
                      cooldownEndTime = data.cooldown_end_iso || null;
-
+                     
                      if (data.lang && translations[data.lang]) {
                          currentLang = data.lang;
                          console.log("Language set from server:", currentLang);
                      } else {
                          console.log("No valid language from server, using default:", currentLang);
                      }
-
-                     setLanguage(currentLang);
+                     
+                     setLanguage(currentLang); // Обновляем ВЕСЬ интерфейс, включая язык и попытки (и таймер)
                  } else {
                       throw new Error("Invalid 'attempts_left' format in response");
                  }
              } catch (error) {
                  console.error('Failed to load initial attempts:', error);
-                 attemptsLeft = -1;
-                 cooldownEndTime = null;
-                 setLanguage(currentLang); // Обновляем UI, даже если ошибка, чтобы показать текст ошибки
-                 attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextError;
-                 attemptsTextElement.classList.add('attempts-error');
-                 updateAnalyzeButtonState();
-                 // ИЗМЕНЕНИЕ: Пробрасываем ошибку дальше, чтобы её поймал initializeApp
-                 throw error;
+                 attemptsLeft = -1; 
+                 cooldownEndTime = null; // Сбрасываем кулдаун при ошибке
+                 setLanguage(currentLang); 
+                 // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
+                 attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextError; 
+                 attemptsTextElement.classList.add('attempts-error'); 
+                 updateAnalyzeButtonState(); 
              }
          }
 
@@ -1824,7 +1831,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             tg.ready();
 
             const urlParams = new URLSearchParams(window.location.search);
-            userId = urlParams.get('user_id');
+            userId = urlParams.get('user_id'); 
 
             if (!userId && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                  userId = tg.initDataUnsafe.user.id?.toString();
@@ -1832,75 +1839,62 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
             const partnerFromUrl = urlParams.get('partner');
             if (partnerFromUrl === 'mostbet' || partnerFromUrl === '1win') {
-                currentPartner = partnerFromUrl;
+                currentPartner = partnerFromUrl; 
             }
+            
+            console.log("User ID:", userId, "Partner:", currentPartner); 
 
-            console.log("User ID:", userId, "Partner:", currentPartner);
-
-            // --- ИЗМЕНЕНИЕ: Новая, более надежная логика инициализации ---
-            async function initializeApp() {
-                // Эта функция управляет всем процессом загрузки.
-                try {
-                    // 1. Сначала "прогреваем" бэкенд (на случай ngrok).
-                    await pingBackend();
-                    // 2. Затем загружаем ключевые данные: попытки и язык пользователя.
-                    await loadInitialAttempts();
-                } catch (e) {
-                    // Если на каком-то из этапов загрузки произошла ошибка,
-                    // она уже обработана и показана в loadInitialAttempts.
-                    console.error("Initialization process failed:", e);
-                } finally {
-                    // 3. Блок finally выполнится ВСЕГДА: и после успешной загрузки, и после ошибки.
-                    const agreementKey = `agreement_accepted_${currentPartner}`;
-                    const isAgreementAccepted = localStorage.getItem(agreementKey);
-
-                    if (!isAgreementAccepted) {
-                        // Если соглашение не принято, показываем модальное окно.
-                        // К этому моменту UI уже переведен на язык пользователя (или на язык по умолчанию при ошибке).
-                        agreementModal.classList.add('show');
-                    } else {
-                        console.log("Agreement previously accepted, app is ready.");
-                    }
-                }
-            }
-
-            if (userId) {
-                // Сначала устанавливаем язык по умолчанию, чтобы пользователь что-то видел
-                setLanguage('ru');
-                // И сразу запускаем процесс полной инициализации.
-                initializeApp();
-            } else {
-                // Обработка случая, когда нет user_id.
-                console.error("User ID not found in URL or initDataUnsafe.");
-                setLanguage('ru'); // Устанавливаем язык по умолчанию для отображения ошибки.
-                attemptsTextElement.textContent = translations['ru'].attemptsTextError;
-                attemptsTextElement.classList.add('attempts-error');
-                updateAnalyzeButtonState();
-            }
+            // Сначала устанавливаем язык по умолчанию, чтобы модальное окно имело текст
+            // ИЗМЕНЕНИЕ: Устанавливаем язык, но setLanguage() сама обработает 'ru'
+            setLanguage(currentLang); 
             // --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
-            // Обработчики модального окна
+            // --- ИЗМЕНЕНИЕ (п.4): Логика проверки соглашения ---
+            if (userId) {
+                const agreementKey = `agreement_accepted_${currentPartner}`;
+                const isAgreementAccepted = localStorage.getItem(agreementKey);
+                
+                if (isAgreementAccepted === 'true') {
+                    // Если уже принято - запускаем приложение
+                    startAppLoad();
+                } else {
+                    // Если не принято - показываем модальное окно
+                    agreementModal.classList.add('show');
+                }
+            } else {
+                 console.error("User ID not found in URL or initDataUnsafe.");
+                 attemptsLeft = -1; 
+                 setLanguage(currentLang);
+                 // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
+                 attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextError;
+                 attemptsTextElement.classList.add('attempts-error');
+                 updateAnalyzeButtonState(); 
+            }
+            
+            // --- ИЗМЕНЕНИЕ (п.2 ТЗ): Обработчики модального окна ---
+            // Навешиваем клик только на сам чекбокс (span)
             document.querySelector('.custom-checkbox').addEventListener('click', () => {
                 agreementCheckbox.checked = !agreementCheckbox.checked;
-                agreementCheckbox.dispatchEvent(new Event('change'));
+                // Вручную вызываем событие 'change', чтобы сработал listener ниже
+                agreementCheckbox.dispatchEvent(new Event('change')); 
             });
-
+            
             agreementCheckbox.addEventListener('change', () => {
                 agreementButton.disabled = !agreementCheckbox.checked;
             });
-
+            
             agreementButton.addEventListener('click', () => {
                 if (agreementCheckbox.checked) {
                     const agreementKey = `agreement_accepted_${currentPartner}`;
                     localStorage.setItem(agreementKey, 'true');
                     agreementModal.classList.remove('show');
-                    // При принятии соглашения ничего перезагружать не нужно,
-                    // так как данные уже были загружены на фоне.
+                    startAppLoad(); // Запускаем приложение после принятия
                 } else {
+                    // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
                     showCustomAlert((translations[currentLang] || translations['ru']).alert_agreement_required);
                 }
             });
-
+            
         });
 
     </script>
