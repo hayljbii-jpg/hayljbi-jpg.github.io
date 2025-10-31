@@ -1771,15 +1771,15 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
     // --- Функция загрузки начальных данных (попыток) ---
     async function loadInitialAttempts() { 
-         // ИЗМЕНЕНИЕ (п.3 ТЗ): Очищаем таймер перед загрузкой
+         // Очищаем таймер перед загрузкой
          if (countdownInterval) {
              clearInterval(countdownInterval);
              countdownInterval = null;
          }
          cooldownEndTime = null; // Сбрасываем кулдаун
         
-         // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
-         attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextLoading; 
+         const t = translations[currentLang] || translations['ru'];
+         attemptsTextElement.textContent = t.attemptsTextLoading; 
          attemptsTextElement.classList.remove('attempts-error');
          console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId} (partner: ${currentPartner})`);
 
@@ -1797,11 +1797,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              }
              const data = await response.json(); 
              console.log("Attempts and lang loaded:", data);
+
              if (typeof data.attempts_left === 'number') {
                  attemptsLeft = data.attempts_left;
-                 // ИЗМЕНЕНИЕ (п.3 ТЗ): Сохраняем время окончания кулдауна
                  cooldownEndTime = data.cooldown_end_iso || null;
                  
+                 // ОПРЕДЕЛЯЕМ ЯЗЫК
                  if (data.lang && translations[data.lang]) {
                      currentLang = data.lang;
                      console.log("Language set from server:", currentLang);
@@ -1809,15 +1810,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                      console.log("No valid language from server, using default:", currentLang);
                  }
                  
-                 // ИЗМЕНЕНИЕ: Сначала устанавливаем язык для всего интерфейса.
+                 // ИСПРАВЛЕНИЕ: Шаг 1. Сначала применяем язык ко всему интерфейсу.
+                 // В этот момент модальное окно тоже переводится, но ещё скрыто.
                  setLanguage(currentLang);
                  
-                 // ИЗМЕНЕНИЕ: Проверяем соглашение ПОСЛЕ установки языка.
+                 // ИСПРАВЛЕНИЕ: Шаг 2. Только теперь проверяем, нужно ли показать модальное окно.
                  const agreementKey = `agreement_accepted_${currentPartner}`;
                  const isAgreementAccepted = localStorage.getItem(agreementKey);
             
                  if (isAgreementAccepted !== 'true') {
-                     // Теперь модальное окно покажется с уже установленным правильным языком.
+                     // Теперь модальное окно появится уже на правильном языке.
                      agreementModal.classList.add('show');
                  }
 
@@ -1827,16 +1829,16 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
          } catch (error) {
              console.error('Failed to load initial attempts:', error);
              attemptsLeft = -1; 
-             cooldownEndTime = null; // Сбрасываем кулдаун при ошибке
-             setLanguage(currentLang); // Устанавливаем язык по умолчанию
-             // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
+             cooldownEndTime = null;
+             
+             // Применяем язык по умолчанию в случае ошибки
+             setLanguage(currentLang); 
              const t = translations[currentLang] || translations['ru'];
              attemptsTextElement.textContent = t.attemptsTextError; 
              attemptsTextElement.classList.add('attempts-error'); 
              updateAnalyzeButtonState();
              
-             // ИЗМЕНЕНИЕ: Показываем модальное окно даже при ошибке, если оно не принято.
-             // Оно будет на языке по умолчанию, но это лучше, чем заблокированное приложение.
+             // Показываем модальное окно даже при ошибке, если оно не принято.
              const agreementKey = `agreement_accepted_${currentPartner}`;
              if (localStorage.getItem(agreementKey) !== 'true') {
                 agreementModal.classList.add('show');
@@ -1863,12 +1865,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         
         console.log("User ID:", userId, "Partner:", currentPartner); 
 
-        // Сначала устанавливаем язык по умолчанию, чтобы интерфейс не был пустым
+        // ИСПРАВЛЕНИЕ: Сначала просто устанавливаем язык по умолчанию, чтобы не было "пустого экрана".
+        // Логика показа модального окна полностью перенесена в loadInitialAttempts.
         setLanguage(currentLang); 
         
-        // ИЗМЕНЕНИЕ: Логика проверки соглашения перенесена в loadInitialAttempts.
-        // Здесь мы просто запускаем загрузку, если есть ID пользователя.
         if (userId) {
+            // Запускаем процесс загрузки данных с сервера.
             startAppLoad();
         } else {
              // Обработка случая, когда ID пользователя не найден
@@ -1880,7 +1882,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              updateAnalyzeButtonState(); 
         }
         
-        // --- Обработчики модального окна ---
+        // --- Обработчики для самого модального окна ---
         document.querySelector('.custom-checkbox').addEventListener('click', () => {
             agreementCheckbox.checked = !agreementCheckbox.checked;
             agreementCheckbox.dispatchEvent(new Event('change')); 
@@ -1895,8 +1897,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 const agreementKey = `agreement_accepted_${currentPartner}`;
                 localStorage.setItem(agreementKey, 'true');
                 agreementModal.classList.remove('show');
-                // ИЗМЕНЕНИЕ: После принятия не нужно ничего перезагружать, 
-                // т.к. данные уже были загружены и отрисованы под модальным окном.
             } else {
                 showCustomAlert((translations[currentLang] || translations['ru']).alert_agreement_required);
             }
