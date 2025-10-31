@@ -1742,7 +1742,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
        // --- Обработчик кнопки анализа ---
         analyzeButton.onclick = analyzeBet;
 
-# --- БЛОК: ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (ИСПРАВЛЕНИЕ) ---
         // --- Функция "прогрева" бэкенда ---
         async function pingBackend() {
             if (!userId) return; 
@@ -1762,7 +1761,13 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             }
         }
         
-        // --- ИЗМЕНЕНИЕ: Функция startAppLoad УДАЛЕНА, её логика перенесена в DOMContentLoaded ---
+        // --- Функция для запуска загрузки данных ---
+        function startAppLoad() {
+             pingBackend(); 
+             setTimeout(() => {
+                 loadInitialAttempts(); 
+             }, 150); 
+        }
 
         // --- Функция загрузки начальных данных (попыток) ---
         async function loadInitialAttempts() { 
@@ -1822,7 +1827,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
 
 
         // --- Инициализация при загрузке страницы ---
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
 
             const urlParams = new URLSearchParams(window.location.search);
@@ -1839,39 +1844,38 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
             
             console.log("User ID:", userId, "Partner:", currentPartner); 
 
-            // --- ИЗМЕНЕНИЕ: Исправлена логика инициализации, чтобы избежать бесконечной загрузки ---
-            if (userId) {
-                // 1. Сначала "прогреваем" бэкенд и загружаем все данные (включая язык).
-                // Это гарантирует, что интерфейс, включая модальное окно, будет переведен до показа.
-                pingBackend();
-                await loadInitialAttempts();
+            // Сначала устанавливаем язык по умолчанию, чтобы модальное окно имело текст
+            // ИЗМЕНЕНИЕ: Устанавливаем язык, но setLanguage() сама обработает 'ru'
+            setLanguage(currentLang); 
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
-                // 2. После загрузки данных проверяем, было ли принято соглашение.
+            // --- ИЗМЕНЕНИЕ (п.4): Логика проверки соглашения ---
+            if (userId) {
                 const agreementKey = `agreement_accepted_${currentPartner}`;
                 const isAgreementAccepted = localStorage.getItem(agreementKey);
                 
                 if (isAgreementAccepted === 'true') {
-                    // Если соглашение уже принято, приложение готово к работе.
-                    // Ничего больше делать не нужно, так как loadInitialAttempts уже все загрузил.
-                    console.log("Agreement previously accepted. App is ready.");
+                    // Если уже принято - запускаем приложение
+                    startAppLoad();
                 } else {
-                    // Если соглашение не принято, показываем модальное окно (оно уже переведено).
+                    // Если не принято - показываем модальное окно
                     agreementModal.classList.add('show');
                 }
             } else {
-                 // Обработка случая, когда нет user_id.
                  console.error("User ID not found in URL or initDataUnsafe.");
                  attemptsLeft = -1; 
-                 setLanguage('ru'); // Устанавливаем язык по умолчанию для отображения ошибки.
-                 attemptsTextElement.textContent = (translations['ru']).attemptsTextError;
+                 setLanguage(currentLang);
+                 // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
+                 attemptsTextElement.textContent = (translations[currentLang] || translations['ru']).attemptsTextError;
                  attemptsTextElement.classList.add('attempts-error');
                  updateAnalyzeButtonState(); 
             }
-            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
             
-            // Обработчики модального окна
+            // --- ИЗМЕНЕНИЕ (п.2 ТЗ): Обработчики модального окна ---
+            // Навешиваем клик только на сам чекбокс (span)
             document.querySelector('.custom-checkbox').addEventListener('click', () => {
                 agreementCheckbox.checked = !agreementCheckbox.checked;
+                // Вручную вызываем событие 'change', чтобы сработал listener ниже
                 agreementCheckbox.dispatchEvent(new Event('change')); 
             });
             
@@ -1884,9 +1888,9 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     const agreementKey = `agreement_accepted_${currentPartner}`;
                     localStorage.setItem(agreementKey, 'true');
                     agreementModal.classList.remove('show');
-                    // ИЗМЕНЕНИЕ: Больше не нужно вызывать startAppLoad(), так как данные уже загружены.
-                    // Просто скрываем модальное окно.
+                    startAppLoad(); // Запускаем приложение после принятия
                 } else {
+                    // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
                     showCustomAlert((translations[currentLang] || translations['ru']).alert_agreement_required);
                 }
             });
