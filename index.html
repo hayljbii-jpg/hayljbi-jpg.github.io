@@ -1348,9 +1348,23 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         }
 
         // --- Обработчики загрузки изображения ---
-        imageUpload.addEventListener('change', (event) => {
+		imageUpload.addEventListener('change', (event) => {
             if (event.target.files && event.target.files[0]) {
-                showImage(event.target.files[0]);
+                // --- ИСПРАВЛЕНИЕ: Добавляем проверку типа файла ---
+                const file = event.target.files[0];
+                if (file.type && file.type.startsWith('image/')) {
+                    // Это изображение, показываем его
+                    showImage(file);
+                } else {
+                    // Файл выбран, но это НЕ изображение
+                    const t = translations[currentLang] || translations['ru'];
+                    // Показываем ошибку, что нужно выбрать именно изображение
+                    showCustomAlert(t.alert_select_image); 
+                    
+                    // Сбрасываем input, чтобы можно было повторно выбрать файл
+                    imageUpload.value = '';
+                }
+                // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
             }
         });
 
