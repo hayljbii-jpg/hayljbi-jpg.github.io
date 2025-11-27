@@ -516,23 +516,11 @@
                     <span>EN</span>
                 </div>
                 <!-- ИЗМЕНЕНИЕ: Добавлены новые языки (Задача 2) -->
-                <div class="language-option" data-lang="zh">
-                    <!-- Иконка флага Китая (простой красный) -->
-                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect fill='%23DE2910' width='900' height='600'/%3E%3C/svg%3E" alt="Chinese Flag">
-                    <span>ZH</span>
-                </div>
                 <div class="language-option" data-lang="hi">
                     <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%23FF9933' width='9' height='2'/%3E%3Crect fill='%23FFFFFF' y='2' width='9' height='2'/%3E%3Crect fill='%23138808' y='4' width='9' height='2'/%3E%3C/svg%3E" alt="Hindi Flag">
                     <span>HI</span>
                 </div>
-                <div class="language-option" data-lang="lv">
-                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Crect fill='%239E1B32' width='9' height='6'/%3E%3Crect fill='%23FFFFFF' y='2.4' width='9' height='1.2'/%3E%3C/svg%3E" alt="Latvian Flag">
-                    <span>LV</span>
-                </div>
-                <div class="language-option" data-lang="de">
-                    <img class="flag-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3'%3E%3Crect width='5' height='3'/%3E%3Crect width='5' height='2' y='1' fill='%23D00'/%3E%3Crect width='5' height='1' y='2' fill='%23FFCE00'/%3E%3C/svg%3E" alt="German Flag">
-                    <span>DE</span>
-                </div>
+                <!-- ИЗМЕНЕНИЕ: Удалены языки ZH, LV, DE согласно Задаче 1 -->
                 <!-- КОНЕЦ ИЗМЕНЕНИЯ -->
             </div>
         </div>
@@ -544,6 +532,8 @@
             <option value="" disabled selected>Тип игры</option>
             <option value="football">Футбол</option>
             <option value="basketball">Баскетбол</option>
+            <!-- ИЗМЕНЕНИЕ: Крикет перенесен на 3 место согласно Задаче 2 -->
+            <option value="cricket">Крикет</option>
             <option value="tennis">Теннис</option>
             <option value="hockey">Хоккей</option>
             <option value="volleyball">Волейбол</option>
@@ -554,7 +544,6 @@
             <option value="baseball">Бейсбол</option>
             <option value="handball">Гандбол</option>
             <option value="rugby">Регби</option>
-            <option value="cricket">Крикет</option>
             <option value="dota2">Dota 2</option>
             <option value="cs2">CS2</option>
         </select>
@@ -612,13 +601,11 @@
         
         // ИЗМЕНЕНИЕ (ЗАДАЧА 30.10): Карта ссылок для Пользовательского соглашения
         // Добавлена новая константа-объект agreementLinks
+        // ИЗМЕНЕНИЕ (Задача 1): Удалены zh, lv, de
         const agreementLinks = {
             'ru': 'https://telegra.ph/Polzovatelskoe-soglashenie-OddsAIBot-10-28',
             'en': 'https://telegra.ph/OddsAIBot-User-Agreement-10-30',
-            'zh': 'https://telegra.ph/OddsAIBot-%E7%94%A8%E6%88%B7%E5%8D%8F%E8%AE%AE-10-30',
             'hi': 'https://telegra.ph/%E0%A4%91%E0%A4%A1%E0%A4%B8%E0%A4%8F%E0%A4%86%E0%A4%88%E0%A4%AC%E0%A4%9F-%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A4%A4-%E0%A4%85%E0%A4%A8%E0%A4%AC%E0%A4%A7-10-30',
-            'lv': 'https://telegra.ph/OddsAIBot-Lietot%C4%81ja-l%C4%ABgums-10-30',
-            'de': 'https://telegra.ph/OddsAIBot-Nutzervereinbarung-10-30'
         };
         // [КОНЕЦ ИЗМЕНЕНИЯ]
 
@@ -633,6 +620,7 @@
         let countdownInterval = null; // Хранит ID интервала
         let cooldownEndTime = null; // Хранит ISO строку времени окончания кулдауна
 
+        // ИЗМЕНЕНИЕ (Задача 1): Удалены ключи zh, lv, de из translations
         const translations = {
             'ru': {
                 'title': '💡 Ставки от AI',
@@ -786,80 +774,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     'cricket': 'Cricket', 'dota2': 'Dota 2', 'cs2': 'CS2'
                 }
             },
-            // ИЗМЕНЕНИЕ: Добавлены НАСТОЯЩИЕ переводы для новых языков
-            'zh': {
-                'title': '💡 AI 投注',
-                'gameType': '游戏类型',
-                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> 上传赛事图片',
-                'uploadHint': '或者粘贴截图 (Ctrl + V)',
-                'analyzeButton': '🔍 分析投注',
-                'analyzeButtonLoading': '⏳ 分析中...',
-                'tryAgainButton': '🔄 选择另一张图片',
-                'attemptsTextLoading': '正在加载尝试次数...',
-                'attemptsTextError': '加载尝试次数失败',
-                'attemptsText': '今日剩余尝试次数: {left} / {total}',
-                'attemptsTimer': '尝试次数将在 <b>{h}小时 {m}分钟</b> 后刷新。',
-                'attemptsResetDeposit': '要重置计时器 - 请在 <b>1Win</b> 存款。',
-                'attemptsResetWait': '计时器结束后将提供新的尝试次数。',
-                'attemptsRefreshing': '正在刷新尝试次数...',
-                'footerText': '由 OddsAIBot 神经网络创建 - © 2026',
-                'footerLinkText': '用户协议',
-                'profit_header': '投入 100$ 您将赚取:',
-                'alert_select_image': '请先上传赛事图片。',
-                'alert_select_game_type': '请先选择游戏类型。',
-                'alert_no_attempts': '您今天的尝试次数已用完。',
-                'alert_api_key_missing': '未提供 Gemini API 密钥。无法进行分析。',
-                'alert_api_error': '分析时出错。请检查控制台或稍后再试。',
-                'alert_model_overloaded': '神经网络超载。请 5 分钟后再试。',
-                'alert_backend_error': '服务器通信错误。尝试次数未被扣除。',
-                'alert_location_not_supported': '您的国家不受神经网络支持。请启用 VPN 更改位置。',
-                'alert_timeout': '神经网络响应时间过长。请重试。',
-                'alert_no_odds_detected': '提供的截图中未检测到投注赔率。',
-                'alert_agreement_required': '请接受用户协议。',
-                'agreement_modal_title': '用户协议',
-                'agreement_modal_text': '使用机器人前，您必须阅读并接受 <a href="{url}" target="_blank" rel="noopener noreferrer">用户协议</a>。',
-                'agreement_modal_checkbox': '我同意用户协议',
-                'agreement_modal_button': '继续',
-                'analyze_prompt': 'Analyze this bet on {gameType}.',
-                 'system_prompt': `You are BetGPT, an AI Analyst.
-
-**Task 1: Validate Image**
-1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
-2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
-3.  **IF YES**: Proceed to analysis.
-
-**Task 2: Analysis and JSON Response**
-1.  Find 3-4 main markets (e.g., "Match Result", "Total").
-2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
-3.  Estimate the probability of each outcome in percent.
-4.  **Format the JSON response STRICTLY according to these rules**:
-
-* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "总分超过 2.5 (1.85)", "probability": 75}, {"name": "比赛结果: 胜1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
-* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "费内巴切 +10.5 让分". **FORBIDDEN** to add any other text or explanations here.
-* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
-* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
-
-${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
-
-**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the CHINESE language.**`,
-                 'analysis_steps': [
-                    '分析图像中...',
-                    '收集团队数据...',
-                    '进行 AI 分析...',
-                    '计算概率中...'
-                ],
-                'results_confidence': 'AI 置信度',
-                'results_signal': '可靠信号',
-                'results_events': '事件百分比',
-                'results_analytics': 'AI 分析',
-                'gameTypes': {
-                    'football': '足球', 'basketball': '篮球', 'tennis': '网球',
-                    'hockey': '冰球', 'volleyball': '排球', 'boxing': '拳击',
-                    'mma': '综合格斗', 'ufc': 'UFC', 'table-tennis': '乒乓球',
-                    'baseball': '棒球', 'handball': '手球', 'rugby': '橄榄球',
-                    'cricket': '板球', 'dota2': 'Dota 2', 'cs2': 'CS2'
-                }
-            },
             'hi': {
                 'title': '💡 एआई बेट्स',
                 'gameType': 'खेल का प्रकार',
@@ -885,7 +799,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_api_error': 'विश्लेषण के दौरान त्रुटि। कृपया कंसोल जांचें या बाद में पुनः प्रयास करें।',
                 'alert_model_overloaded': 'न्यूरल नेटवर्क ओवरलोड है। कृपया 5 मिनट बाद पुनः प्रयास करें।',
                 'alert_backend_error': 'सर्वर संचार त्रुटि। प्रयास का उपयोग नहीं किया गया।',
-                'alert_location_not_supported': 'आपका देश न्यूरल नेटवर्क द्वारा समर्थित नहीं है। कृपया स्थान बदलने के لیے वीपीएन सक्षम करें।',
+                'alert_location_not_supported': 'आपका देश न्यूरल नेटवर्क द्वारा समर्थित नहीं है। कृपया स्थान बदलने के लिए वीपीएन सक्षम करें।',
                 'alert_timeout': 'न्यूरल नेटवर्क प्रतिक्रिया देने में बहुत अधिक समय ले रहा है। कृपया पुनः प्रयास करें।',
                 'alert_no_odds_detected': 'प्रदान किए गए स्क्रीनशॉट में बेटिंग ऑड्स नहीं हैं।',
                 'alert_agreement_required': 'कृपया उपयोगकर्ता समझौता स्वीकार करें।',
@@ -932,154 +846,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     'baseball': 'बेसबॉल', 'handball': 'हैंडबॉल', 'rugby': 'रग्बी',
                     'cricket': 'क्रिकेट', 'dota2': 'डोटा 2', 'cs2': 'सीएस2'
                 }
-            },
-            'lv': {
-                'title': '💡 AI Likmes',
-                'gameType': 'Spēles veids',
-                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Augšupielādēt notikuma attēlu',
-                'uploadHint': 'Vai vienkārši ielīmējiet ekrānuzņēmumu (Ctrl + V)',
-                'analyzeButton': '🔍 Analizēt likmi',
-                'analyzeButtonLoading': '⏳ Analizē...',
-                'tryAgainButton': '🔄 Izvēlēties citu attēlu',
-                'attemptsTextLoading': 'Ielādē mēģinājumus...',
-                'attemptsTextError': 'Neizdevās ielādēt mēģinājumus',
-                'attemptsText': 'Šodien atlikušie mēģinājumi: {left} no {total}',
-                'attemptsTimer': 'Mēģinājumi tiks atjaunināti pēc: <b>{h} st {m} min</b>.',
-                'attemptsResetDeposit': 'Lai atiestatītu taimeri - veiciet depozītu <b>1Win</b>.',
-                'attemptsResetWait': 'Jauni mēģinājumi būs pieejami pēc taimera beigām.',
-                'attemptsRefreshing': 'Atjaunina mēģinājumus...',
-                'footerText': 'Izveidojis neironu tīkls OddsAIBot - © 2026',
-                'footerLinkText': 'Lietotāja līgums',
-                'profit_header': 'Ieguldot 100$, jūs nopelnīsiet:',
-                'alert_select_image': 'Lūdzu, vispirms augšupielādējiet notikuma attēlu.',
-                'alert_select_game_type': 'Lūdzu, vispirms izvēlieties spēles veidu.',
-                'alert_no_attempts': 'Jums šodienai ir beigušies mēģinājumi.',
-                'alert_api_key_missing': 'Nav norādīta Gemini API atslēga. Analīze nav iespējama.',
-                'alert_api_error': 'Analīzes laikā radās kļūda. Lūdzu, pārbaudiet konsoli vai mēģiniet vēlāk.',
-                'alert_model_overloaded': 'Neironu tīkls ir pārslogots. Lūdzu, mēģiniet vēlāk pēc 5 minūtēm.',
-                'alert_backend_error': 'Servera savienojuma kļūda. Mēģinājums netika iztērēts.',
-                'alert_location_not_supported': 'Neironu tīkls neatbalsta jūsu valsti. Lūdzu, ieslēdziet VPN, lai mainītu atrašanās vietu.',
-                'alert_timeout': 'Neironu tīkla atbilde aizņem pārāk ilgu laiku. Lūdzu, mēģiniet vēlreiz.',
-                'alert_no_odds_detected': 'Sniegtajā ekrānuzņēmumā nav derību koeficientu.',
-                'alert_agreement_required': 'Lūdzu, piekrītiet lietotāja līgumam.',
-                'agreement_modal_title': 'Lietotāja līgums',
-                'agreement_modal_text': 'Pirms bota lietošanas jums ir jāizlasa un jāpiekrīt <a href="{url}" target="_blank" rel="noopener noreferrer">Lietotāja līgumam</a>.',
-                'agreement_modal_checkbox': 'Es piekrītu lietotāja līgumam',
-                'agreement_modal_button': 'Turpināt',
-                'analyze_prompt': 'Analyze this bet on {gameType}.',
-                 'system_prompt': `You are BetGPT, an AI Analyst.
-
-**Task 1: Validate Image**
-1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
-2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
-3.  **IF YES**: Proceed to analysis.
-
-**Task 2: Analysis and JSON Response**
-1.  Find 3-4 main markets (e.g., "Match Result", "Total").
-2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
-3.  Estimate the probability of each outcome in percent.
-4.  **Format the JSON response STRICTLY according to these rules**:
-
-* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Kopā Vairāk 2.5 (1.85)", "probability": 75}, {"name": "Spēles rezultāts: W1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
-* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handikaps Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
-* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
-* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
-
-${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
-
-**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the LATVIAN language.**`,
-                 'analysis_steps': [
-                    'Analizē attēlu...',
-                    'Vāc komandu datus...',
-                    'Veic AI analīzi...',
-                    'Aprēķina varbūtības...'
-                ],
-                'results_confidence': 'AI PĀRLIECĪBA',
-                'results_signal': 'UZTICAMS SIGNĀLS',
-                'results_events': 'NOTIKUMU %',
-                'results_analytics': 'AI ANALĪTIKA',
-                'gameTypes': {
-                    'football': 'Futbols', 'basketball': 'Basketbols', 'tennis': 'Teniss',
-                    'hockey': 'Hokejs', 'volleyball': 'Volejbols', 'boxing': 'Bokss',
-                    'mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Galda teniss',
-                    'baseball': 'Beisbols', 'handball': 'Rokasbumba', 'rugby': 'Regbijs',
-                    'cricket': 'Krikets', 'dota2': 'Dota 2', 'cs2': 'CS2'
-                }
-            },
-            'de': {
-                'title': '💡 AI-Wetten',
-                'gameType': 'Spieltyp',
-                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Event-Bild hochladen',
-                'uploadHint': 'Oder fügen Sie einfach einen Screenshot ein (Strg + V)',
-                'analyzeButton': '🔍 Wette analysieren',
-                'analyzeButtonLoading': '⏳ Analysiere...',
-                'tryAgainButton': '🔄 Anderes Bild wählen',
-                'attemptsTextLoading': 'Lade Versuche...',
-                'attemptsTextError': 'Fehler beim Laden der Versuche',
-                'attemptsText': 'Heute verbleibende Versuche: {left} von {total}',
-                'attemptsTimer': 'Versuche werden aktualisiert in: <b>{h} Std {m} Min</b>.',
-                'attemptsResetDeposit': 'Um den Timer zurückzusetzen - zahlen Sie bei <b>1Win</b> ein.',
-                'attemptsResetWait': 'Neue Versuche sind nach Ablauf des Timers verfügbar.',
-                'attemptsRefreshing': 'Aktualisiere Versuche...',
-                'footerText': 'Erstellt vom neuronalen Netz OddsAIBot - © 2026',
-                'footerLinkText': 'Nutzervereinbarung',
-                'profit_header': 'Mit einer Wette von 100$ verdienen Sie:',
-                'alert_select_image': 'Bitte laden Sie zuerst ein Event-Bild hoch.',
-                'alert_select_game_type': 'Bitte wählen Sie zuerst einen Spieltyp aus.',
-                'alert_no_attempts': 'Sie haben für heute keine Versuche mehr.',
-                'alert_api_key_missing': 'Gemini API-Schlüssel nicht angegeben. Analyse nicht möglich.',
-                'alert_api_error': 'Fehler bei der Analyse. Bitte überprüfen Sie die Konsole oder versuchen Sie es später erneut.',
-                'alert_model_overloaded': 'Das neuronale Netz ist überlastet. Bitte versuchen Sie es in 5 Minuten erneut.',
-                'alert_backend_error': 'Server-Komмуikationsfehler. Versuch wurde nicht verbraucht.',
-                'alert_location_not_supported': 'Ihr Land wird vom neuronalen Netz nicht unterstützt. Bitte aktivieren Sie ein VPN, um Ihren Standort zu ändern.',
-                'alert_timeout': 'Das neuronale Netz antwortet zu langsam. Bitte versuchen Sie es erneut.',
-                'alert_no_odds_detected': 'Der bereitgestellte Screenshot enthält keine Wettquoten.',
-                'alert_agreement_required': 'Bitte akzeptieren Sie die Nutzervereinbarung.',
-                'agreement_modal_title': 'Nutzervereinbarung',
-                'agreement_modal_text': 'Bevor Sie den Bot nutzen, müssen Sie die <a href="{url}" target="_blank" rel="noopener noreferrer">Nutzervereinbarung</a> lesen und akzeptieren.',
-                'agreement_modal_checkbox': 'Ich stimme der Nutzervereinbarung zu',
-                'agreement_modal_button': 'Weiter',
-                'analyze_prompt': 'Analyze this bet on {gameType}.',
-                 'system_prompt': `You are BetGPT, an AI Analyst.
-
-**Task 1: Validate Image**
-1.  Examine the screenshot. Does it contain odds (numbers like 1.30, 5.50)?
-2.  **IF NO**: Return ONLY this JSON: \`{"error": "no_odds_detected"}\`.
-3.  **IF YES**: Proceed to analysis.
-
-**Task 2: Analysis and JSON Response**
-1.  Find 3-4 main markets (e.g., "Match Result", "Total").
-2.  For each market, pick ONE most likely outcome and **find its odd** on the screenshot.
-3.  Estimate the probability of each outcome in percent.
-4.  **Format the JSON response STRICTLY according to these rules**:
-
-* **\`events\`**: An array of objects. For **EVERY** event, you **MUST** find its odd and include it in the "name" field in parentheses. Example: \`[{"name": "Gesamt Über 2.5 (1.85)", "probability": 75}, {"name": "Spielergebnis: S1 (2.10)", "probability": 48}]\`. If you cannot find an odd for an event, DO NOT include that event in the list.
-* **\`signal\`**: **STRICTLY ONLY THE NAME** of the outcome with the highest probability (without the odd). Example: "Handicap Fenerbahce +10.5". **FORBIDDEN** to add any other text or explanations here.
-* **\`confidence\`**: **ONLY THE NUMBER** of the probability from the \`signal\` field.
-* **\`analytics\`**: A **DETAILED ANALYSIS** of the 'signal' outcome in 2-3 sentences. Explain the reasoning. **FORBIDDEN** to repeat the outcome name in this field.
-
-${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
-
-**IMPORTANT: All text values in your final JSON output (like 'signal', 'analytics', and 'name' inside 'events') MUST be in the GERMAN language.**`,
-                 'analysis_steps': [
-                    'Analysiere Bild...',
-                    'Sammle Teamdaten...',
-                    'Führe AI-Analyse durch...',
-                    'Berechne Wahrscheinlichkeiten...'
-                ],
-                'results_confidence': 'AI KONFIDENZ',
-                'results_signal': 'ZUVERLÄSSIGES SIGNAL',
-                'results_events': '% EREIGNISSE',
-                'results_analytics': 'AI ANALYTIK',
-                'gameTypes': {
-                    'football': 'Fußball', 'basketball': 'Basketball', 'tennis': 'Tennis',
-                    'hockey': 'Eishockey', 'volleyball': 'Volleyball', 'boxing': 'Boxen',
-                    'mma': 'MMA', 'ufc': 'UFC', 'table-tennis': 'Tischtennis',
-                    'baseball': 'Baseball', 'handball': 'Handball', 'rugby': 'Rugby',
-                    'cricket': 'Kricket', 'dota2': 'Dota 2', 'cs2': 'CS2'
-                }
             }
-            // КОНЕЦ ИЗМЕНЕНИЯ
         };
 
         const imageUpload = document.getElementById('imageUpload');
@@ -1919,3 +1686,5 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
     });
 
 </script>
+</body>
+</html>
