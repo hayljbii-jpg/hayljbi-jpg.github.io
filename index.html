@@ -623,11 +623,12 @@
         let cooldownEndTime = null; // Хранит ISO строку времени окончания кулдауна
 
         // ИЗМЕНЕНИЕ (Задача 1): Удалены ключи zh, lv, de из translations
-        const translations = {
+		const translations = {
             'ru': {
                 'title': '💡 Ставки от AI',
                 'gameType': 'Тип игры',
-                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg' width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Загрузите изображение события',
+                // ИСПРАВЛЕНО: Исправлена кавычка после svg
+                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Загрузите изображение события',
                 'uploadHint': 'Или просто вставьте скриншот (Ctrl + V)',
                 'analyzeButton': '🔍 Проанализировать ставку',
                 'analyzeButtonLoading': '⏳ Анализируем...',
@@ -635,15 +636,11 @@
                 'attemptsTextLoading': 'Загрузка попыток...',
                 'attemptsTextError': 'Ошибка загрузки попыток',
                 'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
-                // ИЗМЕНЕНИЕ (п.3 ТЗ): Новые тексты для таймера
                 'attemptsTimer': 'Попытки обновятся через: <b>{h} ч {m} мин</b>.',
-                // ИЗМЕНЕНИЕ: Заменили '1Win' на '{partner}' для универсальности
                 'attemptsResetDeposit': 'Для сброса таймера - сделайте депозит в <b>{partner}</b>.',
                 'attemptsResetWait': 'Новые попытки будут доступны после окончания таймера.',
                 'attemptsRefreshing': 'Обновляем попытки...',
-                // ИЗМЕНЕНИЕ (п.5): Обновлен текст футера
                 'footerText': 'Создано нейросетью OddsAIBot - © 2026',
-                // ИЗМЕНЕНИЕ (п.5): Добавлен текст для ссылки
                 'footerLinkText': 'Пользовательское соглашение',
                 'profit_header': 'При вложенных 100$ вы заработаете:',
                 'alert_select_image': 'Пожалуйста, сначала загрузите изображение события.',
@@ -656,7 +653,6 @@
                 'alert_location_not_supported': 'Ваша страна не поддерживается работой нейросети. Включите VPN для смены местоположения.',
                 'alert_timeout': 'Нейросеть слишком долго отвечает. Пожалуйста, попробуйте еще раз.',
                 'alert_no_odds_detected': 'Предоставленный скриншот не содержит букмекерских коэффициентов.',
-                // ИЗМЕНЕНИЕ (п.4): Переводы для модального окна
                 'alert_agreement_required': 'Пожалуйста, примите пользовательское соглашение.',
                 'agreement_modal_title': 'Пользовательское соглашение',
                 'agreement_modal_text': 'Перед использованием бота вы должны прочесть и принять <a href="{url}" target="_blank" rel="noopener noreferrer">Пользовательское соглашение</a>.',
@@ -713,9 +709,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'attemptsTextLoading': 'Loading attempts...',
                 'attemptsTextError': 'Failed to load attempts',
                 'attemptsText': 'Attempts left today: {left} of {total}',
-                // ИЗМЕНЕНИЕ (п.3 ТЗ): Новые тексты для таймера
                 'attemptsTimer': 'Attempts will refresh in: <b>{h}h {m}m</b>.',
-                // ИЗМЕНЕНИЕ: Заменили '1Win' на '{partner}' для универсальности
                 'attemptsResetDeposit': 'To reset the timer - make a deposit on <b>{partner}</b>.',
                 'attemptsResetWait': 'New attempts will be available after the timer ends.',
                 'attemptsRefreshing': 'Refreshing attempts...',
@@ -732,7 +726,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'alert_location_not_supported': 'Your country is not supported by the neural network. Please enable a VPN to change your location.',
                 'alert_timeout': 'The neural network is taking too long to respond. Please try again.',
                 'alert_no_odds_detected': 'The provided screenshot does not contain betting odds.',
-                // ИЗМЕНЕНИЕ (п.4): Переводы для модального окна
                 'alert_agreement_required': 'Please accept the User Agreement.',
                 'agreement_modal_title': 'User Agreement',
                 'agreement_modal_text': 'Before using the bot, you must read and accept the <a href="{url}" target="_blank" rel="noopener noreferrer">User Agreement</a>.',
@@ -790,7 +783,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'attemptsTextError': 'प्रयास लोड करने में विफल',
                 'attemptsText': 'आज के लिए शेष प्रयास: {left} में से {total}',
                 'attemptsTimer': 'प्रयास <b>{h} घंटे {m} मिनट</b> में रीफ्रेश होंगे।',
-                // ИЗМЕНЕНИЕ: Заменили '1Win' на '{partner}'
                 'attemptsResetDeposit': 'टाइमर रीसेट करने के लिए - <b>{partner}</b> पर जमा करें।',
                 'attemptsResetWait': 'टाइमर समाप्त होने के बाद नए प्रयास उपलब्ध होंगे।',
                 'attemptsRefreshing': 'प्रयास रीफ्रेश हो रहे हैं...',
