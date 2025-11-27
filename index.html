@@ -615,6 +615,8 @@
         let isAnalyzing = false;
         let userId = null;
         let currentPartner = '1win'; 
+        // ИЗМЕНЕНИЕ: Добавлена переменная для хранения модели оплаты (cpa или revshare)
+        let currentPaymentModel = 'cpa'; // Значение по умолчанию
         
         // ИЗМЕНЕНИЕ (п.3 ТЗ): Глобальные переменные для таймера
         let countdownInterval = null; // Хранит ID интервала
@@ -625,7 +627,7 @@
             'ru': {
                 'title': '💡 Ставки от AI',
                 'gameType': 'Тип игры',
-                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Загрузите изображение события',
+                'uploadLabel': '<svg xmlns="http://www.w3.org/2000/svg' width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg> Загрузите изображение события',
                 'uploadHint': 'Или просто вставьте скриншот (Ctrl + V)',
                 'analyzeButton': '🔍 Проанализировать ставку',
                 'analyzeButtonLoading': '⏳ Анализируем...',
@@ -635,7 +637,8 @@
                 'attemptsText': 'Осталось попыток на сегодня: {left} из {total}',
                 // ИЗМЕНЕНИЕ (п.3 ТЗ): Новые тексты для таймера
                 'attemptsTimer': 'Попытки обновятся через: <b>{h} ч {m} мин</b>.',
-                'attemptsResetDeposit': 'Для сброса таймера - сделайте депозит в <b>1Win</b>.',
+                // ИЗМЕНЕНИЕ: Заменили '1Win' на '{partner}' для универсальности
+                'attemptsResetDeposit': 'Для сброса таймера - сделайте депозит в <b>{partner}</b>.',
                 'attemptsResetWait': 'Новые попытки будут доступны после окончания таймера.',
                 'attemptsRefreshing': 'Обновляем попытки...',
                 // ИЗМЕНЕНИЕ (п.5): Обновлен текст футера
@@ -712,7 +715,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'attemptsText': 'Attempts left today: {left} of {total}',
                 // ИЗМЕНЕНИЕ (п.3 ТЗ): Новые тексты для таймера
                 'attemptsTimer': 'Attempts will refresh in: <b>{h}h {m}m</b>.',
-                'attemptsResetDeposit': 'To reset the timer - make a deposit on <b>1Win</b>.',
+                // ИЗМЕНЕНИЕ: Заменили '1Win' на '{partner}' для универсальности
+                'attemptsResetDeposit': 'To reset the timer - make a deposit on <b>{partner}</b>.',
                 'attemptsResetWait': 'New attempts will be available after the timer ends.',
                 'attemptsRefreshing': 'Refreshing attempts...',
                 'footerText': 'Created by OddsAIBot neural network - © 2026',
@@ -786,7 +790,8 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                 'attemptsTextError': 'प्रयास लोड करने में विफल',
                 'attemptsText': 'आज के लिए शेष प्रयास: {left} में से {total}',
                 'attemptsTimer': 'प्रयास <b>{h} घंटे {m} मिनट</b> में रीफ्रेश होंगे।',
-                'attemptsResetDeposit': 'टाइमर रीसेट करने के लिए - <b>1Win</b> पर जमा करें।',
+                // ИЗМЕНЕНИЕ: Заменили '1Win' на '{partner}'
+                'attemptsResetDeposit': 'टाइमर रीसेट करने के लिए - <b>{partner}</b> पर जमा करें।',
                 'attemptsResetWait': 'टाइमर समाप्त होने के बाद नए प्रयास उपलब्ध होंगे।',
                 'attemptsRefreshing': 'प्रयास रीफ्रेश हो रहे हैं...',
                 'footerText': 'OddsAIBot न्यूरल नेटवर्क द्वारा निर्मित - © 2026',
@@ -893,12 +898,10 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
         }
 
         // --- ИЗМЕНЕНИЕ (п.3 ТЗ): Новая функция для запуска таймера ---
-        function startCountdown(endTimeISO) {
-            // ИЗМЕНЕНИЕ: Добавлена проверка на translations[currentLang]
+		function startCountdown(endTimeISO) {
             const t = translations[currentLang] || translations['ru'];
             const endTime = new Date(endTimeISO).getTime();
             
-            // Очищаем старый таймер, если он был
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
@@ -911,35 +914,43 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                     attemptsTextElement.textContent = t.attemptsRefreshing;
-                    // Перезагружаем попытки с сервера
                     loadInitialAttempts(); 
                     return;
                 }
 
-                // Расчет времени
                 const hours = Math.floor(distance / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                // const seconds = Math.floor((distance % (1000 * 60)) / 1000); // По ТЗ секунды не нужны, только часы/минуты
 
-                // Формируем строку
                 let timerString = t.attemptsTimer
                     .replace('{h}', hours)
                     .replace('{m}', minutes);
                 
-                // Добавляем специфичное сообщение для партнера
-                if (currentPartner === '1win') {
-                    timerString += `<br>${t.attemptsResetDeposit}`;
-                } else if (currentPartner === 'mostbet') {
-                    timerString += `<br>${t.attemptsResetWait}`;
+                const partnerDisplayName = currentPartner.toLowerCase() === 'mostbet' ? 'Mostbet' : '1Win';
+                const depositText = t.attemptsResetDeposit.replace('{partner}', partnerDisplayName);
+
+                // --- ЛОГИКА ТЕКСТА ПО МОДЕЛИ ОПЛАТЫ ---
+                if (currentPartner.toLowerCase() === '1win') {
+                    // 1win: Всегда просим депозит
+                    timerString += `<br>${depositText}`;
+                } else if (currentPartner.toLowerCase() === 'mostbet') {
+                    // Mostbet: Зависит от модели
+                    if (currentPaymentModel === 'cpa') {
+                        // CPA = просим депозит
+                        timerString += `<br>${depositText}`;
+                    } else {
+                        // RevShare = просим ждать
+                        timerString += `<br>${t.attemptsResetWait}`;
+                    }
                 }
+                // --------------------------------------
 
                 attemptsTextElement.innerHTML = timerString;
                 attemptsTextElement.classList.remove('attempts-error');
                 updateAnalyzeButtonState();
             }
 
-            updateTimer(); // Запускаем сразу
-            countdownInterval = setInterval(updateTimer, 1000); // Обновляем каждую секунду
+            updateTimer(); 
+            countdownInterval = setInterval(updateTimer, 1000); 
         }
 
         // --- ИЗМЕНЕНИЕ (п.3 ТЗ): Функция для обновления текста о попытках ---
@@ -1582,6 +1593,12 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              if (typeof data.attempts_left === 'number') {
                  attemptsLeft = data.attempts_left;
                  cooldownEndTime = data.cooldown_end_iso || null;
+                 
+                 // ИЗМЕНЕНИЕ: Сохраняем модель оплаты, полученную с сервера
+                 if (data.payment_model) {
+                     currentPaymentModel = data.payment_model;
+                     console.log("Payment model set to:", currentPaymentModel);
+                 }
                  
                  // ОПРЕДЕЛЯЕМ ЯЗЫК
                  if (data.lang && translations[data.lang]) {
