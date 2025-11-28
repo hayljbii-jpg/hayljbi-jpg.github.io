@@ -912,39 +912,30 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                     return;
                 }
 
-                const hours = Math.floor(distance / (1000 * 60 * 60));
+				const hours = Math.floor(distance / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
 
                 let timerString = t.attemptsTimer
                     .replace('{h}', hours)
                     .replace('{m}', minutes);
                 
+                // Определяем красивое имя партнера для отображения
                 const partnerDisplayName = currentPartner.toLowerCase() === 'mostbet' ? 'Mostbet' : '1Win';
+                
+                // Получаем текст "Сделай депозит в {partner}"
                 const depositText = t.attemptsResetDeposit.replace('{partner}', partnerDisplayName);
 
-                // --- ЛОГИКА ТЕКСТА ПО МОДЕЛИ ОПЛАТЫ ---
-                if (currentPartner.toLowerCase() === '1win') {
-                    // 1win: Всегда просим депозит
-                    timerString += `<br>${depositText}`;
-                } else if (currentPartner.toLowerCase() === 'mostbet') {
-                    // Mostbet: Зависит от модели
-                    if (currentPaymentModel === 'cpa') {
-                        // CPA = просим депозит
-                        timerString += `<br>${depositText}`;
-                    } else {
-                        // RevShare = просим ждать
-                        timerString += `<br>${t.attemptsResetWait}`;
-                    }
-                }
-                // --------------------------------------
-
+                // ИЗМЕНЕНИЕ: Убрана проверка payment_model. 
+                // Теперь мы ВСЕГДА предлагаем сделать депозит для сброса таймера.
+                timerString += `<br>${depositText}`;
+                
                 attemptsTextElement.innerHTML = timerString;
                 attemptsTextElement.classList.remove('attempts-error');
                 updateAnalyzeButtonState();
             }
 
             updateTimer(); 
-            countdownInterval = setInterval(updateTimer, 1000); 
+            countdownInterval = setInterval(updateTimer, 1000);
         }
 
         // --- ИЗМЕНЕНИЕ (п.3 ТЗ): Функция для обновления текста о попытках ---
