@@ -197,11 +197,27 @@
             font-size: 14px;
             line-height: 1.5;
         }
-        .attempts-error {
+		.attempts-error {
             background-color: #e53935; /* Красный */
             color: white;
             font-weight: 500;
         }
+        
+        /* НОВОЕ: Стиль для кнопки повтора внутри ошибки */
+        .retry-btn {
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 8px;
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .retry-btn:active {
+            opacity: 0.7;
+        }
+
         .footer-text {
             font-size: 12px;
             color: #888;
@@ -1520,13 +1536,14 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
     analyzeButton.onclick = analyzeBet;
 
     // --- Функция "прогрева" бэкенда ---
-    async function pingBackend() {
+	async function pingBackend() {
         if (!userId) return; 
         console.log("Pinging backend to potentially bypass ngrok warning...");
         try {
-            fetch(`${BACKEND_URL}/`, { 
+            // ИЗМЕНЕНИЕ: Добавлен параметр &t=${Date.now()} чтобы избежать кэширования запроса
+            fetch(`${BACKEND_URL}/?t=${Date.now()}`, { 
                  method: 'GET',
-                 cache: 'no-cache',
+                 cache: 'no-store', // no-store строже чем no-cache
                  headers: {
                     'ngrok-skip-browser-warning': 'true'
                  }
@@ -1547,7 +1564,7 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
     }
 
     // --- Функция загрузки начальных данных (попыток) ---
-    async function loadInitialAttempts() { 
+		async function loadInitialAttempts() { 
          // Очищаем таймер перед загрузкой
          if (countdownInterval) {
              clearInterval(countdownInterval);
@@ -1556,14 +1573,21 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
          cooldownEndTime = null; // Сбрасываем кулдаун
         
          const t = translations[currentLang] || translations['ru'];
-         attemptsTextElement.textContent = t.attemptsTextLoading; 
+         // Если мы перезагружаем после ошибки, оставляем блок красным, но меняем текст
+         if (!attemptsTextElement.classList.contains('attempts-error')) {
+             attemptsTextElement.textContent = t.attemptsTextLoading; 
+         } else {
+             attemptsTextElement.innerHTML = `${t.attemptsTextLoading} <span class="retry-btn" onclick="loadInitialAttempts()">🔄</span>`;
+         }
+         
          attemptsTextElement.classList.remove('attempts-error');
          console.log(`Requesting attempts from ${BACKEND_URL} for user ${userId} (partner: ${currentPartner})`);
 
          try {
-             const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}&partner=${currentPartner}`, {
+             // ИЗМЕНЕНИЕ: Добавлен параметр &t=${Date.now()} - это "cache buster".
+             const response = await fetch(`${BACKEND_URL}/get_attempts?user_id=${userId}&partner=${currentPartner}&t=${Date.now()}`, {
                  method: 'GET',
-                 cache: 'no-cache', 
+                 cache: 'no-store', // Изменено на no-store для полной гарантии
                  headers: {
                     'ngrok-skip-browser-warning': 'true'
                  }
@@ -1594,7 +1618,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  }
                  
                  // ИСПРАВЛЕНИЕ: Шаг 1. Сначала применяем язык ко всему интерфейсу.
-                 // В этот момент модальное окно тоже переводится, но ещё скрыто.
                  setLanguage(currentLang);
                  
                  // ИСПРАВЛЕНИЕ: Шаг 2. Только теперь проверяем, нужно ли показать модальное окно.
@@ -1602,7 +1625,6 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
                  const isAgreementAccepted = localStorage.getItem(agreementKey);
             
                  if (isAgreementAccepted !== 'true') {
-                     // Теперь модальное окно появится уже на правильном языке.
                      agreementModal.classList.add('show');
                  }
 
@@ -1617,7 +1639,21 @@ ${MY_CUSTOM_PROMPT ? `Additional instruction: "${MY_CUSTOM_PROMPT}".` : ''}
              // Применяем язык по умолчанию в случае ошибки
              setLanguage(currentLang); 
              const t = translations[currentLang] || translations['ru'];
-             attemptsTextElement.textContent = t.attemptsTextError; 
+             
+             // ИЗМЕНЕНИЕ: Добавлена КНОПКА ПОВТОРА (onclick="loadInitialAttempts()")
+             if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+                 const networkErrors = {
+                     'ru': `⚠️ Сервер недоступен.<br><span class="retry-btn" onclick="loadInitialAttempts()">🔄 Повторить</span>`,
+                     'en': `⚠️ Server unavailable.<br><span class="retry-btn" onclick="loadInitialAttempts()">🔄 Try Again</span>`,
+                     'hi': `⚠️ सर्वर अनुपलब्ध है.<br><span class="retry-btn" onclick="loadInitialAttempts()">🔄 पुनः प्रयास करें</span>`
+                 };
+                 attemptsTextElement.innerHTML = networkErrors[currentLang] || networkErrors['ru'];
+                 console.error("CRITICAL: Backend URL is unreachable. Check DNS or Server status.");
+             } else {
+                 // Для обычных ошибок тоже добавим кнопку
+                 attemptsTextElement.innerHTML = `${t.attemptsTextError}<br><span class="retry-btn" onclick="loadInitialAttempts()">🔄</span>`;
+             }
+             
              attemptsTextElement.classList.add('attempts-error'); 
              updateAnalyzeButtonState();
              
